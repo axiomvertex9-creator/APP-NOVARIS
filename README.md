@@ -10,7 +10,7 @@ Built for the **NASA Space Apps Challenge**.
 
 > **Streamlit link:** `PASTE YOUR STREAMLIT LINK HERE`
 
-> **Demo video (optional):** `PASTE VIDEO LINK HERE`
+
 
 ---
 
@@ -55,7 +55,7 @@ NOVARIS is a learning platform for young people who dream of becoming astronauts
 - HTML, CSS and JavaScript (Canvas, Web Audio) embedded in Streamlit
 - Three.js-style 3D game assets (`.glb` models) for the academy game
 
-*(Add any NASA data sets, APIs or tools your team used here.)*
+
 
 ---
 
@@ -85,7 +85,7 @@ Put the game files in a folder named `game files` next to the main Python file. 
 
 ```
 random_things/
-├── dontask6.py              # main Streamlit app
+├── APP_NOVARIS.py              # main Streamlit app
 ├── orion_widget.py          # Orion helper widget
 ├── planet_codex.py          # planet reference
 ├── novaris_intro/           # animated intro component
@@ -112,12 +112,10 @@ random_things/
 
 ---
 
-## 👥 Team
-
-| Name | Role |
-|---|---|
-| `Your name` | `Role` |
-| `Teammate` | `Role` |
+TEAM:
+UJAAN GHOSH- (Team leader) Web animation
+SUPRABHO MUKHERJEE- Webpage and backend
+SHASHANK SRIVASTAVA- Game
 
 ---
 
@@ -125,10 +123,7 @@ random_things/
 
 - NASA Space Apps Challenge
 - NASA and ISRO public mission information
-- *(Add anything else you used or were inspired by.)*
+
 
 ---
 
-## 📄 License
-
-*(Choose a license, for example MIT, or write "All rights reserved".)*
