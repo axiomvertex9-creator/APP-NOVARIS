@@ -22,7 +22,7 @@ NOVARIS is a learning platform for young people who dream of becoming astronauts
 
 **Our goal:** make space science, spacecraft engineering and mission planning feel hands-on, visual and fun.
 
-*(Write more about your idea, the problem you solve and your challenge here.)*
+
 
 ---
 
