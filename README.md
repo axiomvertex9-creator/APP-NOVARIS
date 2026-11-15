@@ -8,7 +8,7 @@ Built for the **NASA Space Apps Challenge**.
 
 ## 🔗 Live App
 
-> **Streamlit link:** `PASTE YOUR STREAMLIT LINK HERE`
+> **Streamlit link:** `app-novaris-jl7td574dpoimbznkuwakc.streamlit.app`
 
 
 
