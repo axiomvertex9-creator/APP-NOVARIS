@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NOVARIS — Astra Nexus Academy</title>
+<link href='https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap' rel='stylesheet'>
+<style>
+:root{--bg:#050a18;--pn:rgba(10,20,45,.88);--tx:#e8f1ff;--ac:#38d4ff;--ac2:#ff9d3c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#050a18}}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--tx);font-family:"Segoe UI",system-ui,Arial,sans-serif;overflow:hidden}
+body>canvas{position:fixed;inset:0;display:block;z-index:0}
+.p{background:linear-gradient(145deg,rgba(16,34,72,.82),rgba(6,12,30,.9));border:1px solid rgba(56,212,255,.45);border-radius:14px;backdrop-filter:blur(10px);padding:12px 16px;box-shadow:0 0 24px rgba(56,212,255,.18),inset 0 0 18px rgba(56,212,255,.06)}
+#hud{position:fixed;left:10px;top:calc(10px + env(safe-area-inset-top,0px));max-width:min(340px,60vw);font-size:13px}
+#hud h3{margin:0 0 2px;font-size:11px;letter-spacing:2px;color:var(--ac)}#hud h2{margin:0 0 8px;font-size:16px}
+#ol{list-style:none;margin:0;padding:0}#ol li{opacity:.45;padding:2px 0}#ol li.d{opacity:.7;text-decoration:line-through}#ol li.c{opacity:1;color:var(--ac2);font-weight:600}
+#xp{position:fixed;right:10px;top:calc(10px + env(safe-area-inset-top,0px));text-align:right;font-size:13px}
+#xp b{color:var(--ac2);font-size:18px}
+#pr{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);display:none;cursor:pointer;font-weight:600;border-color:var(--ac2);animation:pulseGlow 1.8s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 12px rgba(255,157,60,.35)}50%{box-shadow:0 0 22px rgba(255,157,60,.7)}}
+
+#dlg{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(680px,94vw);display:none}
+#dlg .w{color:var(--ac);font-size:12px;letter-spacing:2px;margin-bottom:4px}
+button{background:var(--ac);color:#021;border:0;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;margin:6px 6px 0 0;font-size:14px}
+button.s{background:transparent;color:var(--tx);border:1px solid var(--ac)}
+#ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(12,31,77,.35),rgba(3,6,18,.85));text-align:center;z-index:5;padding:16px}
+#ov .p{max-width:520px}#ov h1{letter-spacing:6px;margin:0;font-size:clamp(26px,6vw,44px);color:var(--ac)}
+h1,#hud h2,#hud h3,#xp b{font-family:Orbitron,'Segoe UI',sans-serif}#ar{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:none;align-items:center;gap:10px;padding:6px 16px;font-weight:700}#ai{color:var(--ac2);font-size:22px;line-height:1}
+#bt,#bb{position:fixed;left:0;right:0;background:#000;z-index:4;display:none}#bt{top:0;height:12vh}#bb{bottom:0;height:22vh;padding:10px 6vw;color:#fff;font-size:clamp(13px,2.2vw,18px);line-height:1.5}#sub{cursor:pointer;padding-right:70px}.cin #bt,.cin #bb{display:block}
+#gm{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(580px,94vw);max-height:86vh;overflow:auto;display:none;z-index:6}#gm h3{margin:0 0 4px;color:var(--ac);font-family:Orbitron,sans-serif;font-size:15px;letter-spacing:1px}#gm canvas{width:100%;background:#020816;border-radius:8px;display:block;margin:6px 0}#gm input[type=range]{width:100%}#gm .row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}#gi{margin:4px 0 8px;font-size:13px;line-height:1.5}#gs{min-height:20px;font-size:13px;color:var(--ac2);margin:6px 0;line-height:1.5}.myth{color:#ff6b6b;font-weight:700}.real{color:#6bff9a;font-weight:700}.cin #hud,.cin #xp,.cin #mb,.cin #ar,.cin #pr,.cin #dlg,.cin #pg,.cin #joyBase,.cin #campusBtn,.cin #orionCampusBtn,.cin #academyHelp{display:none!important}
+#bb b{color:var(--ac);letter-spacing:2px;margin-right:10px}#sk{position:absolute;right:12px;top:8px;margin:0;font-size:12px;padding:4px 10px}
+#tip{position:fixed;left:50%;top:70px;transform:translateX(-50%);display:none;color:var(--ac2);font-weight:700;text-shadow:0 0 12px rgba(255,157,60,.6);padding:8px 16px;background:rgba(5,15,40,.75);border-radius:20px;border:1px solid rgba(255,157,60,.4);pointer-events:none;z-index:7;transition:opacity .3s}
+/* Premium Virtual Joystick */
+#joyBase{position:fixed;left:28px;bottom:28px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(20,40,80,.55),rgba(5,12,30,.75));border:2px solid rgba(56,212,255,.55);box-shadow:0 0 30px rgba(56,212,255,.25),inset 0 0 20px rgba(56,212,255,.08);z-index:9;touch-action:none;display:none;user-select:none;-webkit-user-select:none}
+#joyThumb{position:absolute;left:50%;top:50%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b8f0ff,#1a7a9e 70%,#0a3a55);border:2px solid #9cecff;box-shadow:0 0 18px #38d4ff,0 4px 12px rgba(0,0,0,.45);pointer-events:none;transition:transform .05s linear}
+#joyBase.active #joyThumb{box-shadow:0 0 28px #38d4ff,0 0 8px #fff}
+#joyRing{position:absolute;inset:8px;border-radius:50%;border:1px dashed rgba(56,212,255,.35);pointer-events:none}
+@media (pointer:coarse),(max-width:900px){#joyBase{display:block}#pr{bottom:170px!important}#academyHelp{bottom:170px!important}}
+/* Enhanced UI polish */
+.p{transition:box-shadow .3s,border-color .3s}
+button{transition:transform .15s,box-shadow .2s,background .2s}
+button:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(56,212,255,.35)}
+button:active{transform:scale(.97)}
+#hud,#xp{backdrop-filter:blur(14px);box-shadow:0 0 30px rgba(56,212,255,.22)}
+#dlg{backdrop-filter:blur(16px);box-shadow:0 0 40px rgba(56,212,255,.3)}
+#ov .p{animation:fadeInUp .8s ease-out}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+#xv{text-shadow:0 0 12px rgba(255,157,60,.5)}
+/* ===== FIXED HUD / BOARD LAYOUT (never floats, never covers centre or controls) ===== */
+#gm canvas{position:static!important;inset:auto!important}
+#ar{display:none!important}
+#hud{max-width:min(310px,58vw);padding:8px 12px;z-index:4;touch-action:pan-y}
+#hud h3{font-size:10px;margin:0;letter-spacing:1.5px}
+#hud h2{font-size:14px;margin:2px 0 4px}
+#cur{font-size:12px;color:var(--ac2);font-weight:600;line-height:1.3}
+#hbar{height:5px;background:#0a1a30;border-radius:3px;margin:6px 0 4px;overflow:hidden}
+#hbf{display:block;height:100%;width:0;background:var(--ac2);transition:width .4s}
+#hmeta{font-size:11px;opacity:.85;min-height:13px}
+#hexp{display:none;margin-top:6px;border-top:1px solid rgba(56,212,255,.3);padding-top:6px;font-size:12px;line-height:1.45;overflow:auto;max-height:calc(100vh - 230px);overscroll-behavior:contain}
+#hud.x #hexp{display:block}
+#hud button{padding:5px 9px;font-size:11px;margin:6px 6px 0 0}
+#dlg{z-index:10}
+@media (pointer:coarse),(max-width:900px){#hexp{max-height:calc(100vh - 330px)}#dlg{bottom:calc(176px + env(safe-area-inset-bottom,0px))}}
+#se{position:fixed;z-index:8;left:10px;top:calc(10px + env(safe-area-inset-top,0px));bottom:20px;width:min(600px,calc(100vw - 96px));display:none;flex-direction:column;padding:10px 12px;touch-action:pan-y}
+@media (pointer:coarse),(max-width:900px){#se{bottom:190px}}
+#seh{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+#seh h3{flex:1;margin:0;font-family:Orbitron,sans-serif;font-size:13px;color:var(--ac);letter-spacing:1px}
+#seh button{margin:0;padding:4px 9px;font-size:12px}
+#set{display:flex;gap:4px;overflow-x:auto;margin-bottom:6px;padding-bottom:2px}
+#set button{margin:0;padding:5px 10px;font-size:12px;white-space:nowrap}
+#set button.on{background:var(--ac);color:#021}
+#seb{overflow:auto;flex:1;font-size:12.5px;line-height:1.45;overscroll-behavior:contain}
+.mi{border:1px solid rgba(56,212,255,.25);border-radius:8px;margin:4px 0;padding:4px 8px}
+.mi summary{cursor:pointer;font-weight:600}
+.mi.done{opacity:.8;border-color:rgba(107,255,154,.5)}
+.mi.act{border-color:var(--ac2);box-shadow:0 0 10px rgba(255,157,60,.3)}
+.mi.lock{opacity:.55;border-style:dashed}
+.ob{padding:1px 0}.ob.d{color:#6bff9a;text-decoration:line-through;opacity:.85}.ob.c{color:var(--ac2);font-weight:700}.ob.l{opacity:.6}
+.tag{font-size:10px;padding:1px 6px;border-radius:9px;margin-left:6px;border:1px solid currentColor;font-weight:700}
+#sePill{position:fixed;left:10px;bottom:20px;display:none;z-index:8;cursor:pointer;padding:6px 12px;font-size:12px;color:var(--tx)}
+@media (pointer:coarse),(max-width:900px){#sePill{bottom:190px}}
+.stat{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px}
+.stat div{border:1px solid rgba(56,212,255,.3);border-radius:8px;padding:6px 8px}
+.bar{height:6px;background:#0a1a30;border-radius:3px;overflow:hidden;margin-top:3px}.bar i{display:block;height:100%;background:var(--ac2)}
+.sec{color:var(--ac);font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:1px;margin:10px 0 4px}
+.rw{padding:2px 0}.rw.d{color:#6bff9a}.rw.l{opacity:.55}
+body.seopen #hud{visibility:hidden}
+#setp{position:fixed;right:100px;top:calc(60px + env(safe-area-inset-top,0px));width:230px;display:none;z-index:9;font-size:12px;line-height:1.5}
+#setp input[type=range]{width:100%}
+#ov{z-index:20}
+.cin #se,.cin #sePill,.cin #setp,.cin .tb{display:none!important}
+</style></head><body>
+
+<div id="ov"><div class="p"><h1>NOVARIS</h1><div style="letter-spacing:4px;margin-bottom:12px">ASTRA NEXUS ACADEMY · THE FIRST EXPEDITION</div>
+<p style='color:#ff9d3c;font-weight:700;letter-spacing:1px;border:1px solid #ff9d3c;border-radius:8px;padding:8px;background:rgba(255,157,60,.08)'>INTERNET REQUIRED FOR THREE.JS · PROGRESS AUTOSAVES LOCALLY</p>
+<p style="line-height:1.55;opacity:.95">Choose your cadet. Move with <b>WASD / Arrows</b> or the <b>virtual joystick</b> on mobile. Press <b>E</b> at glowing beacons and portals to interact. 25 story missions, fully explorable campus, faculty, research labs, planetarium and training centre await.</p>
+<p style="font-size:12px;opacity:.7;margin-top:6px">Hyper-detailed 3D academy · Smooth controls · Science-rich practicals</p>
+
+<button onclick="go('m')">▶ Male Cadet</button><button onclick="go('f')">▶ Female Cadet</button><button class="s" id="cont" onclick="go(G,1)" style="display:none">Continue</button></div></div>
+<div id="hud" class="p"><h3 id="ch"></h3><h2 id="mt"></h2><div id="cur"></div><div id="hbar"><i id="hbf"></i></div><div id="hmeta"></div>
+<div id="hexp"><div id="mdesc"></div><ul id="ol" style="margin-top:6px"></ul><div id="mrew" style="color:var(--ac2)"></div><div id="mloc" style="opacity:.8"></div></div>
+<div><button class="s" id="bExp">▾ EXPAND</button><button id="bAll">SHOW EVERYTHING</button></div></div>
+<div id="xp" class="p">XP <b id="xv">0</b><br><span id="rk">Cadet</span></div>
+<div id="pr" class="p" onclick="act()">Press E — Interact</div><div id='ar' class='p'><div id='ai'>▲</div><span id='ad'></span></div><button id='mb' class='s' onclick='toggleMusic()' style='position:fixed;right:10px;top:calc(88px + env(safe-area-inset-top,0px));margin:0;background:rgba(10,20,45,.8)'>🔊</button><div id="tip"></div>
+<div id="joyBase"><div id="joyRing"></div><div id="joyThumb"></div></div>
+
+<div id="dlg" class="p"><div class="w" id="dw"></div><div id="dt"></div><div id="db"></div></div>
+<div id='gm' class='p'><h3 id='gh'></h3><div id='gi'></div><div id='gc'></div><div id='gs'></div><button class='s' onclick='gClose(0)'>✖ Close</button></div><div id='bt'></div><div id='bb'><button id='sk' onclick='skipC()'>Skip ▶</button><div id='sub' onclick='nextShot()'></div></div>
+<div id='pg' class='p' style='position:fixed;left:50%;bottom:150px;transform:translateX(-50%);display:none;width:min(360px,80vw)'><div id='pgt' style='font-size:13px;margin-bottom:6px'></div><div style='height:8px;background:#0a1a30;border-radius:4px;overflow:hidden'><div id='pgb' style='height:100%;width:0;background:var(--ac2);transition:width 1.2s linear'></div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=i=>document.getElementById(i);
+// [env, title, speaker, opening line, objectives, xp, quiz?]
+const M=[
+["atrium","Welcome to Nexus","Receptionist","Welcome to Astra Nexus Academy. Your arrival has been registered. Please proceed to the Grand Atrium.",["Enter the academy","Speak to the receptionist","Explore the Grand Atrium","Approach the holographic Earth","Activate the ID console","Follow Orion to orientation"],100],
+['class','The Academy Tour',"Commander Vega","Welcome aboard, Cadet. This academy is a research facility preparing humanity’s next generation of explorers.",["Visit the science classroom","Enter the lecture theatre","Explore the research lounge","Visit the observation balcony","Examine the holographic Earth","Return to Commander Vega"],150],
+["bio","The Mystery of the Unknown Cell","Dr. Nova Reyes","We received an unusual sample from an unexplored environment. We must understand its cellular structure.",["Approach the digital microscope","Activate the interface","Identify the nucleus","Identify the mitochondria","Identify the cell membrane","Compare with the cell model"],250,["Which organelle is the cell’s powerhouse?",["Nucleus","Mitochondria","Membrane"],1]],
+["bio","The Human Body Project","Dr. Nova Reyes","Before studying life beyond Earth, you must understand the human body.",["Approach the skeleton","Identify major bones","Examine the muscular system","Inspect heart and lungs","Examine brain and nerves","Complete the anatomy challenge"],300,["Which organ pumps blood around the body?",["Lungs","Heart","Kidney"],1]],
+["bio","The DNA Archive","Dr. Nova Reyes","DNA stores biological information. Reconstruct this incomplete sequence.",["Activate the DNA hologram","Examine the double helix","Identify nucleotides","Solve base-pairing puzzle","Reconstruct the sequence","Submit for analysis"],250,["In DNA, adenine (A) pairs with…",["Guanine","Thymine","Cytosine"],1]],
+["chem","The Molecular Emergency","Professor Helix","Cadet, your chemistry training begins with molecular identification.",["Examine the periodic table","Identify hydrogen and oxygen","Build a water molecule","Build carbon dioxide","Build an oxygen molecule","Molecular matching challenge"],250,["Water’s formula is…",["CO₂","H₂O","O₂"],1]],
+["chem","The Oxygen System","Professor Helix","Our oxygen-generation simulator shows an unexpected result. Let’s investigate.",["Approach the electrolysis rig","Activate the simulation","Examine the water molecule","Observe electrolysis","Identify the gases produced","Balance the equation","Submit the report"],350,["Electrolysis of water yields…",["Hydrogen + oxygen","Carbon + oxygen","Nitrogen + helium"],0]],
+["phys","The Physics Challenge","Dr. Lyra Voss","Welcome to physics, Cadet. Here we investigate the laws that govern our universe.",["Activate the gravity chamber","Observe the pendulum","Change the pendulum length","Observe Newton’s cradle","Investigate the spring-mass","Complete the gravity quiz"],300,["A longer pendulum swings…",["Faster","Slower","Identically"],1]],
+["phys","The Orbital Mechanics Simulator","Dr. Lyra Voss","A virtual satellite has drifted from its orbit. Determine what has happened.",["Activate orbital simulation","Observe the trajectory","Examine velocity and path","Adjust parameters","Find a stable orbit","Submit your results"],400,["What keeps a satellite in orbit?",["Balance of gravity and velocity","Engines always on","Magnetism"],0]],
+["phys","Light and Magnetism","Dr. Lyra Voss","Let us explore light and electromagnetic fields.",["Activate the light experiment","Direct beam through prism","Observe dispersion","Examine magnetic fields","Investigate electromagnetism","Physics assessment"],300,["A prism splits white light into…",["A spectrum","Sound","Heat only"],0]],
+["plan","The Solar System","Professor Atlas","Welcome to the Cosmic Observatory. Today you will explore our solar system.",["Activate planetary hologram","Examine Mercury","Examine Venus","Explore Earth and Mars","Study Jupiter and Saturn","Examine Uranus and Neptune","Order all eight planets"],350,["Which planet is the largest?",["Saturn","Jupiter","Neptune"],1]],
+["plan","The Deep Space Archive","Professor Atlas","The universe contains objects far more extraordinary than our imagination.",["Examine the asteroid","Observe the comet","Investigate the neutron star","Study the black hole","Explore the spiral galaxy","Identification challenge"],400,["Black holes bend light through…",["Gravitational lensing","Refraction in glass","Magnetism"],0]],
+['dock','The Spacecraft Archive',"Commander Vega","Every spacecraft represents years of research and engineering.",["Examine the ISS","Identify its modules","Inspect James Webb","Compare with Hubble","Explore Voyager","Examine the lunar rover","Identification challenge"],350,["JWST mainly observes in…",["Infrared","X-ray only","Radio only"],0]],
+["moon","Operation Lunar","Commander Vega","Welcome to the Moon. Your first planetary research assignment begins now.",["Exit the research station","Inspect the environment","Examine the lunar crater","Operate the lunar rover","Collect geological samples","Return to the station","Submit the report"],450],
+["mars","The Red Planet","Professor Atlas","Mars may hold important clues about the history of planetary environments.",["Explore the Mars base","Visit the Martian desert","Examine the canyon","Investigate surface features","Analyse the atmosphere","Identify research sites","Submit the report"],500,["Mars’ atmosphere is mostly…",["Oxygen","Carbon dioxide","Methane"],1]],
+["europa","The Ice World","Dr. Nova Reyes","Europa is intriguing for astrobiology. But evidence of habitability is not proof of life.",["Explore the icy surface","Examine surface structures","Study subsurface ocean evidence","Investigate microbial possibility","Submit habitability assessment"],500,["Europa orbits which planet?",["Saturn","Jupiter","Mars"],1]],
+["titan","Titan Expedition","Professor Atlas","Titan is the only moon with a thick atmosphere and surface liquids.",["Explore Titan","Examine atmosphere","Investigate methane lakes","Compare Titan with Earth","Environment assessment"],450,["Titan’s lakes are made of…",["Water","Methane","Lava"],1]],
+["eva","First Spacewalk","Commander Vega","Today you experience your first simulated extravehicular activity.",["Enter preparation area","Suit inspection checklist","Activate the airlock","Exit the spacecraft","Learn zero-g movement","Reach the inspection point","Return to the airlock"],500],
+["eva","The Solar Array","Commander Vega","A simulation reports a malfunction in one of the station’s solar arrays.",["Exit through the airlock","Locate the solar array","Examine the damage","Operate the robotic arm","Complete the repair puzzle","Verify array status","Return to the station"],550],
+["eva","The Lost Satellite","Agent Orion","Receiving the satellite’s last recorded position.",["Receive last position","Navigate outside","Locate the satellite","Examine components","Identify the malfunction","Recover research equipment","Return to the station"],600],
+['cmd','The Unknown Signal',"Commander Vega","Cadet, we have detected an unidentified signal from a distant planetary system.",["Access the control console","Examine the signal","Analyse the coordinates","Identify the target system","Prepare exploration report"],500],
+["plan","Planetary Analysis","Professor Helix","Atmospheric analysis is ready. Biological evidence remains inconclusive.",["Map the target system","Analyse atmosphere","Examine biosignatures","Investigate surface","Estimate gravity","Prepare habitability report"],650],
+['dock','The Expedition Preparation',"Commander Vega","Your first major expedition begins now.",["Inspect the spacecraft","Examine the engine cutaway","Inspect the multi-stage rocket","Check equipment inventory","Activate navigation","Launch readiness checklist"],500],
+["deep","Project Nova — The Expedition","Agent Orion","Welcome to deep space, Cadet. Navigation systems active.",["Monitor navigation console","Identify target system","Observe approaching planet","Activate scanning interface","Record environmental data","Complete data collection"],750],
+["exo","The First Discovery","Commander Vega","Today, you are no longer a student. You are an explorer.",["Step onto the alien world","Scan the landscape","Approach the glowing crystals","Record the first discovery"],1000]
+];
+const E={atrium:[0x0a1430,0x1a2a4a,"earth"],bio:[0x082018,0x143a30,"dna"],chem:[0x1a0a2a,0x2d1a48,"mol"],phys:[0x0a1a2a,0x193048,"pend"],plan:[0x03030f,0x10142e,"solar"],moon:[0x000005,0x777777,"rock"],mars:[0x2a0f08,0xa8472a,"rock"],europa:[0x061a2a,0xcfe8f5,"rock"],titan:[0x2a1a05,0x8a5a1c,"rock"],eva:[0x000008,0x0a0f22,"sta"],deep:[0x000008,0x070a1c,"sta"],exo:[0x14052a,0x4a1f6e,'rock'],class:[0x0b1e33,0x24406a,'class'],cmd:[0x070d1f,0x14233f,'cmd'],dock:[0x0a0f1c,0x1b2436,'dock']};
+let G="m",mi=0,oi=0,xp=0,busy=true,keys={},joy=null,ups=[],bc,t0=0;
+const R=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',alpha:false});R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.25;R.outputEncoding=THREE.sRGBEncoding;document.body.prepend(R.domElement);
+
+const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(60,1,.1,500),W=new THREE.Group();S.add(W);
+S.add(new THREE.HemisphereLight(0x99bbff,0x223355,.8));const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(15,30,15);dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);Object.assign(dl.shadow.camera,{left:-40,right:40,top:40,bottom:-40,far:90});S.add(dl);const pt=new THREE.PointLight(0x38d4ff,1.4,22);S.add(pt);
+const st=new THREE.BufferGeometry(),sp=[],sc=[];for(let i=0;i<3800;i++){const a=Math.random()*6.283,b=Math.acos(2*Math.random()-1),r=180+Math.random()*140;sp.push(r*Math.sin(b)*Math.cos(a),r*Math.cos(b),r*Math.sin(b)*Math.sin(a));const q=new THREE.Color().setHSL(Math.random()<.55?.58:.08,.55,.65+Math.random()*.35);sc.push(q.r,q.g,q.b)}
+st.setAttribute("position",new THREE.Float32BufferAttribute(sp,3));st.setAttribute('color',new THREE.Float32BufferAttribute(sc,3));S.add(new THREE.Points(st,new THREE.PointsMaterial({size:1.8,vertexColors:true,fog:false,sizeAttenuation:false,transparent:true,opacity:.95})));neb('rgba(120,60,255,.85)',-150,60,-180,280);neb('rgba(40,160,255,.75)',170,30,-150,240);neb('rgba(255,80,160,.65)',0,-40,-220,280);neb('rgba(80,220,200,.45)',-80,-50,-190,200);
+
+const P=new THREE.Group(),sm=c=>new THREE.MeshStandardMaterial({color:c,roughness:.5,metalness:.3});
+function neb(c,x,y,z,s){const k=document.createElement('canvas');k.width=k.height=128;const g=k.getContext('2d'),gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,c);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,128,128);const q=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(k),transparent:true,opacity:.5,blending:THREE.AdditiveBlending,fog:false,depthWrite:false}));q.position.set(x,y,z);q.scale.set(s,s,1);S.add(q)}
+function T(c,b,c2){const k=document.createElement('canvas');k.width=512;k.height=256;const x=k.getContext('2d');x.fillStyle=c;x.fillRect(0,0,512,256);for(let i=0;i<(b?60:140);i++){x.globalAlpha=.25;x.fillStyle=b?(i%2?'#fff':'#000'):(c2||'#fff');if(b)x.fillRect(0,Math.random()*256,512,4+Math.random()*14);else{x.beginPath();x.ellipse(Math.random()*512,Math.random()*256,10+Math.random()*50,6+Math.random()*25,0,0,7);x.fill()}}const t=new THREE.CanvasTexture(k);t.encoding=THREE.sRGBEncoding;return t}
+const pm=(c,i)=>new THREE.MeshStandardMaterial({map:T('#'+c.toString(16).padStart(6,'0'),i>3),roughness:.7});
+function mkAstro(){const c=G==='m'?0x2e7dff:0xff5fa8,mt=x=>new THREE.MeshStandardMaterial({color:x,roughness:.45,metalness:.25}),u=P.userData;const mk=(g,m,x,y,z,p)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;(p||P).add(o);return o};
+mk(new THREE.CylinderGeometry(.55,.5,1.3,16),mt(0xeef2fa),0,1.5,0);mk(new THREE.BoxGeometry(.6,.45,.2),mt(c),0,1.6,.5);mk(new THREE.BoxGeometry(.9,1.1,.45),mt(0xbcc6d8),0,1.55,-.6);mk(new THREE.SphereGeometry(.55,24,24),mt(0xeef2fa),0,2.5,0);
+mk(new THREE.SphereGeometry(.42,24,24),new THREE.MeshStandardMaterial({color:0x0b1530,roughness:.1,metalness:.9,emissive:0x1a6a9a,emissiveIntensity:.7}),0,2.5,.22).scale.set(1,.85,.7);
+if(G==='f')mk(new THREE.SphereGeometry(.2,10,10),mt(0x553322),0,2.8,-.6);else mk(new THREE.CylinderGeometry(.03,.03,.5),mt(c),.3,3.1,0);
+const lm=(x,y,col,len,k)=>{const g=new THREE.Group();g.position.set(x,y,0);mk(new THREE.CylinderGeometry(.17,.15,len,10),mt(col),0,-len/2,0,g);mk(new THREE.SphereGeometry(.2,10,10),mt(0x333a4a),0,-len,0,g);P.add(g);u[k]=g};
+lm(-.75,2,0xeef2fa,.9,'al');lm(.75,2,0xeef2fa,.9,'ar');lm(-.28,.9,c,.9,'l');lm(.28,.9,c,.9,'r');S.add(P)}
+let orion,npcs=[],AC,mus=true,mg,ci=0,mood=1,F={c:0,b:0};
+const LOOK={'Receptionist':[0x1b6fd8,0xffd9b3,0x2a1a10,0],'Commander Vega':[0xb01e2e,0xc68a5e,0x111111,0],'Dr. Nova Reyes':[0xf2f6ff,0xb98262,0x1a0f0a,1],'Professor Helix':[0xf2f6ff,0xf0c8a0,0xcfcfcf,1],'Dr. Lyra Voss':[0xf2f6ff,0xe8b890,0x7a2a1a,1],'Professor Atlas':[0xf2f6ff,0x8a5a3a,0xeeeeee,1],'Mira':[0x8a5cff,0xf0c8a0,0x2a1a10,0],'Leo':[0x1fa37a,0xe8b890,0x3a2210,0],'Dax':[0xe0762b,0xc68a5e,0x111111,0]};
+const X={1:['Professor Atlas'],12:['Professor Atlas'],14:['Commander Vega'],15:['Professor Atlas'],16:['Commander Vega'],19:['Commander Vega'],20:['Professor Atlas'],21:['Professor Atlas','Dr. Nova Reyes'],22:['Dr. Lyra Voss'],23:['Commander Vega'],24:['Professor Atlas']};
+const LN={'Receptionist':['Welcome to Astra Nexus Academy! Your arrival has been registered.','Need directions? The Grand Atrium is straight ahead.'],'Commander Vega':['Stay focused, Cadet. Every mission builds on the last.','Safety first. Check your suit before every expedition.','Explorers are made through preparation.'],'Dr. Nova Reyes':['Evidence of habitability is not proof of life.','Cells are the building blocks of every living thing.'],'Professor Helix':['Atoms bond to reach stable arrangements. That is chemistry in one sentence.','Always balance your equations!'],'Dr. Lyra Voss':['Physics is about how the universe behaves, not just equations.','Gravity shapes every orbit you will ever fly.'],'Professor Atlas':['The universe holds objects far more extraordinary than our imagination.','Light from distant stars is a message from the past.'],'Dax':['Do not slow me down, rookie.','I am the best pilot in this academy. Ask anyone.','Fine. You are not as bad as I thought.'],'Cadet':['I am hoping to join the Mars team!','Did you hear about the unknown signal? Everyone is talking about it.','The planetarium is my favourite place in the academy.','Good luck on your expedition!']};
+function label(t,w){const k=document.createElement('canvas');k.width=256;k.height=64;const g=k.getContext('2d');g.fillStyle='rgba(5,15,40,.75)';g.fillRect(0,0,256,64);g.strokeStyle='#38d4ff';g.lineWidth=3;g.strokeRect(1,1,254,62);g.fillStyle='#fff';g.font='bold 26px sans-serif';g.textAlign='center';g.fillText(t,128,42);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(k),depthTest:false,fog:false}));s.scale.set(w||4,(w||4)/4,1);s.renderOrder=9;return s}
+function mkNPC(nm,helm,col,lbl){const L=LOOK[nm]||[col,0xe0b090,0x332211,0],g=new THREE.Group(),u=g.userData,mt=(x,o)=>new THREE.MeshStandardMaterial(Object.assign({color:x,roughness:.55},o||{})),ad=(geo,m,x,y,z,p)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;(p||g).add(o);return o};u.name=lbl||nm;
+ad(new THREE.CylinderGeometry(.52,.46,1.4,16),mt(L[0]),0,1.6,0);if(L[3])ad(new THREE.CylinderGeometry(.58,.64,1.1,16),mt(0xf2f6ff),0,1.05,0);else ad(new THREE.CylinderGeometry(.5,.5,.18,16),mt(0x222222),0,1.0,0);
+ad(new THREE.SphereGeometry(.45,20,20),mt(L[1]),0,2.55,0);ad(new THREE.SphereGeometry(.47,16,16),mt(L[2]),0,2.7,-.03).scale.set(1,.7,1);ad(new THREE.SphereGeometry(.06,8,8),mt(0x111111),-.15,2.58,.4);ad(new THREE.SphereGeometry(.06,8,8),mt(0x111111),.15,2.58,.4);
+if(helm){ad(new THREE.SphereGeometry(.64,20,20),mt(0x99ddff,{transparent:true,opacity:.28,metalness:.8,roughness:.05}),0,2.55,0);ad(new THREE.BoxGeometry(.9,1.1,.45),mt(0xbcc6d8),0,1.6,-.6)}
+if(nm==='Commander Vega'){ad(new THREE.BoxGeometry(.4,.1,.3),mt(0xffc83a,{metalness:.8}),-.55,2.28,0);ad(new THREE.BoxGeometry(.4,.1,.3),mt(0xffc83a,{metalness:.8}),.55,2.28,0)}
+const lm=(x,y,len,k,c)=>{const p=new THREE.Group();p.position.set(x,y,0);ad(new THREE.CylinderGeometry(.16,.14,len,10),mt(c),0,-len/2,0,p);ad(new THREE.SphereGeometry(.18,10,10),mt(k==='arm'||k==='al'?L[1]:0x222222),0,-len,0,p);g.add(p);return p};
+u.arm=lm(.72,2.2,.9,'arm',L[0]);u.al=lm(-.72,2.2,.9,'al',L[0]);u.l=lm(-.28,.9,.9,'l',0x1d2438);u.r=lm(.28,.9,.9,'r',0x1d2438);
+const s=label(u.name);s.position.y=3.9;g.add(s);return g}
+function mkOrion(){const g=new THREE.Group(),m=new THREE.MeshBasicMaterial({color:0x38d4ff,transparent:true,opacity:.75,wireframe:true});g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(.45,1),m));g.add(new THREE.Mesh(new THREE.SphereGeometry(.2,12,12),new THREE.MeshBasicMaterial({color:0xffffff})));const r=new THREE.Mesh(new THREE.TorusGeometry(.7,.03,8,32),m);g.add(r);g.userData.r=r;const l=label('ORION',2.4);l.position.y=1.1;g.add(l);return g}
+function spawnCast(){npcs.forEach(n=>S.remove(n));npcs=[];const k=M[mi][0],helm=['moon','mars','europa','titan','eva','deep','exo'].includes(k),cast=[M[mi][2]].concat(X[mi]||[]).filter(n=>LOOK[n]);
+cast.forEach((n,i)=>{const c=mkNPC(n,helm);c.position.set(-7+i*6,0,15-i*2);S.add(c);npcs.push(c)});const bf=mkNPC(BF(),helm);bf.userData.follow=true;bf.position.set(3.5,0,21);S.add(bf);npcs.push(bf);if(DX.includes(mi)){const dx=mkNPC('Dax',helm);dx.position.set(8,0,14);S.add(dx);npcs.push(dx)}
+if(mi==0){add(new THREE.BoxGeometry(5,1.1,1.2),-7,.55,16.6,0x16264a,{emissive:0x0a2a55});add(new THREE.BoxGeometry(3,1.2,.1),-7,1.9,16.9,0x38d4ff,{emissive:0x38d4ff,transparent:true,opacity:.35})}
+if(!helm){const cs=[0x7a4aff,0x1fa37a,0xe0762b,0xd04a8a,0x3a8ad8,0xc9b21e];for(let i=0;i<6;i++){const c=mkNPC('Student',false,cs[i],'Cadet');const u=c.userData;u.wander=true;c.position.set((Math.random()-.5)*36,0,(Math.random()-.5)*30);u.tx=c.position.x;u.tz=c.position.z;S.add(c);npcs.push(c)}}}
+function ship(x,y,z,s,ry){const g=new THREE.Group(),mt=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.35,metalness:.6},o||{})),ad=(geo,m,px,py,pz,rx)=>{const o=new THREE.Mesh(geo,m);o.position.set(px,py,pz);if(rx)o.rotation.x=rx;o.castShadow=true;g.add(o);return o};
+ad(new THREE.CylinderGeometry(1.6,1.9,9,20),mt(0xe8eef8),0,0,0,Math.PI/2);ad(new THREE.ConeGeometry(1.6,4,20),mt(0xe8eef8),0,0,6.5,Math.PI/2);ad(new THREE.SphereGeometry(1,16,16),mt(0x0b1530,{emissive:0x1a6a9a,emissiveIntensity:.8,roughness:.1}),0,1.2,3.6).scale.set(.9,.7,1.5);ad(new THREE.TorusGeometry(1.75,.15,8,24),mt(0xff9d3c),0,0,1.5);
+ad(new THREE.BoxGeometry(9,.25,3.5),mt(0x2e5aa8),0,-.4,-1.5);ad(new THREE.BoxGeometry(.25,2.8,2.2),mt(0xff9d3c),0,2,-3.8);const fl=[];
+[-.9,0,.9].forEach(px=>{ad(new THREE.CylinderGeometry(.5,.6,1,12),mt(0x555a6a),px*1.1,0,-4.8,Math.PI/2);fl.push(ad(new THREE.ConeGeometry(.5,2.4,12),new THREE.MeshBasicMaterial({color:0xffaa33,transparent:true,opacity:.8}),px*1.1,0,-6.3,-Math.PI/2))});
+[[-2,-1],[2,-1],[0,3]].forEach(a=>{ad(new THREE.CylinderGeometry(.15,.2,3,8),mt(0x777c8a),a[0],-1.9,a[1]);ad(new THREE.CylinderGeometry(.6,.6,.12,12),mt(0x777c8a),a[0],-3.4,a[1])});
+ups.push(t=>fl.forEach((f,i)=>f.scale.y=.8+Math.sin(t*20+i)*.25));const l=label('ASTRA-1 EXPLORER',6);l.position.y=5;g.add(l);g.position.set(x,y,z);g.rotation.y=ry||0;g.scale.setScalar(s);W.add(g);return g}
+const LOC={atrium:'Nexus Grand Atrium',bio:'Biology Laboratory',chem:'Chemistry Laboratory',phys:'Physics Laboratory',plan:'Planetarium',moon:'Lunar Research Station',mars:'Mars Research Base',europa:'Europa Ice Surface',titan:'Titan Surface',eva:'Space Station Exterior',deep:'Deep Space',exo:'Unknown Exoplanet',class:'Science Classroom',cmd:'Mission Control Command Room',dock:'Docking Centre & Engineering Bay'};
+const D={0:{at:0,who:'Agent Orion',q:'Cadet, would you like a guided orientation with my full assistance, or explore the academy on your own?',o:[['Guided orientation with Orion','Excellent. I will keep my sensors on you and flag anything important.','c',0,'guided'],['I will explore on my own','Independent exploration noted. Take 100 XP for initiative, but stay alert.','b',100]]},
+1:{at:3,who:'Commander Vega',q:'A younger cadet asks for help with her project, but we are short on time. Help her, or continue the tour?',o:[['Help the cadet','Kindness noted. She thanks you warmly. +50 XP.','c',50,'helped'],['Continue the tour','Efficient. We stay on schedule.','b',0]]},
+2:{at:3,who:'Dr. Nova Reyes',q:'The sample behaves strangely. Report to the Director now, or run one more test first?',o:[['Report to the Director','Protocol followed. The Director is grateful for your caution. +50 XP.','c',50],['Run another test first','Bold. The second test reveals new data. +100 XP.','b',100]]},
+8:{at:3,who:'Dr. Lyra Voss',q:'The satellite is drifting. Perform a slow, safe correction burn, or a fast high-risk burn?',o:[['Slow, safe correction','Stable and predictable. Good engineering discipline. +50 XP.','c',50],['Fast risky burn','It works! Barely. +120 XP.','b',120]]},
+13:{at:3,who:'Commander Vega',q:'The rover can cross the crater rim (fast, risky) or take the long safe route. Your call.',o:[['Cross the crater rim','The rover tilts but holds. Great sample access. +120 XP.','b',120],['Take the safe route','Slow but secure. Samples intact. +50 XP.','c',50]]},
+15:{at:3,who:'Dr. Nova Reyes',q:'A funding review is coming. Report Europa as habitable with no proof of life, or hint at possible life to impress the sponsors?',o:[['Honest report','Science needs honesty. The Director is proud of you. +100 XP.','c',100,'hon'],['Hint at possible life','The sponsors are thrilled, but Vega will not forget this. +150 XP.','b',150,'lie']]},
+20:{at:2,who:'Commander Vega',q:'The signal is unverified. Report to the Director for approval first, or begin the investigation immediately?',o:[['Report to the Director','Approval granted within minutes. Proper channels, Cadet. +50 XP.','c',50],['Investigate immediately','Initiative noted. We gain a head start. +100 XP.','b',100]]},
+21:{at:3,who:'Professor Helix',q:'Limited time: analyse the atmosphere in depth, or search deeper for biosignatures?',o:[['Deep atmosphere analysis','Excellent data. The air is breathable with suits. +75 XP.','c',75,'atm'],['Search for biosignatures','Faint organic traces detected! +100 XP.','b',100,'bio']]},
+22:{at:3,who:'Commander Vega',q:'Cargo space is limited. Load extra oxygen reserves, or extra sensor probes?',o:[['Extra oxygen','Safety margin increased. +50 XP.','c',50,'o2'],['Extra sensor probes','More data on arrival. +75 XP.','b',75,'probe']]},
+23:{at:3,who:'Agent Orion',q:'Asteroid field ahead. Fly through the shortcut, or go around the long way?',o:[['Shortcut through the field','Hull scraped, but we gained days. +150 XP.','b',150,'short'],['Go around','Safe, if slower. +50 XP.','c',50]]},
+3:{at:3,who:'Mira',q:'Tonight is the anatomy exam. Study together in the lounge, or get some rest alone?',o:[['Study together','A late-night study session, shared snacks and laughter. A friendship begins. +50 XP.','c',50,'love'],['Rest alone','You sleep well, but the lounge felt a little quiet. +25 XP.','b',25]]},
+6:{at:4,who:'Dax',q:'Dax mocks your friend’s mistake in front of the whole class. Step in, or stay out of it?',o:[['Defend your friend','The room goes quiet. Your friend’s eyes shine with gratitude. +75 XP.','c',75,'love'],['Stay out of it','An awkward silence. You feel it too. +25 XP.','b',25]]},
+10:{at:3,who:'Mira',q:'Your friend is quiet, eyes fixed on Jupiter. What do you say?',o:[['I am here. Take your time.','A long silence, then a small smile, and a hand finds yours. +75 XP.','c',75,'love'],['He might still be out there. We will find him.','Hope flickers in the eyes beside you. Almost too much hope. +75 XP.','b',75,'hope']]},
+14:{at:4,who:'Commander Vega',q:'Dax’s rover is stuck in a dust storm. Rescue Dax yourself, or leave it to the rescue team?',o:[['Rescue Dax','Dust whips your suit, but you pull Dax free. Respect, at last. +100 XP.','c',100,'dax'],['Leave it to the team','Safe, but Dax will remember who did not come. +25 XP.','b',25]]},
+17:{at:3,who:'Mira',q:'Your friend’s breathing is fast and the airlock looms. How do you help?',o:[['Talk through slow breaths','Your calm voice steadies the comms. Thank you. +75 XP.','c',75,'love'],['Remind that it is only training','Practical, but a little cold. +50 XP.','b',50]]},
+19:{at:4,who:'Mira',q:'The Meridian beacon is in your hands, and your friend is crying. What do you do?',o:[['Hold your friend close','No words are needed. +75 XP.','c',75,'love'],['Give space but stay near','A quiet understanding. +50 XP.','b',50]]},
+24:{at:2,who:'Commander Vega',q:'Glowing crystals ahead. Approach to scan them personally, or hold position and send a drone?',o:[['Approach and scan','Your hands tremble, but the scan succeeds. +200 XP.','b',200],['Send the drone','The drone returns perfect data. Safe and smart. +100 XP.','c',100]]}};
+const RX={20:()=>(F.lie?' Vega: “After your Europa report, the Director wants every claim verified twice.”':F.hon?' Vega: “Your honest Europa report earned you the Director’s trust.”':'')+(F.helped?' The cadet you helped earlier waves from a console.':''),24:()=>F.short?' Orion: “Hull damage from the asteroid field is minor, but noted.”':F.o2?' Orion: “Extra oxygen reserves are ready if needed.”':''};
+function choose(at){const d=D[mi];if(d&&d.who==='Mira')d.who=BF();if(!d||d.at!==at||F['d'+mi])return false;F['d'+mi]=1;busy=true;place();$('dw').textContent=d.who.toUpperCase()+' — DECISION';$('dt').textContent=d.q;const b=$('db');b.innerHTML='';d.o.forEach(o=>{const e=document.createElement('button');e.textContent=o[0];e.onclick=()=>{if(o[2]==='c')F.c++;else F.b++;if(o[4])F[o[4]]=(F[o[4]]||0)+1;xp+=o[3]||0;hud();say(o[1],d.who,[['Continue',()=>{busy=false;place();hud()}]])};b.appendChild(e)});$('dlg').style.display='block';return true}
+function ending(){const t=F.c>=F.b?'ENDING: THE CAREFUL EXPLORER. Your caution and teamwork keep the crew safe.':'ENDING: THE DARING PIONEER. Your bold decisions open the frontier.';return t+(F.hon?' The Director cites your honesty.':F.lie?' Vega quietly reminds you that honesty matters.':'')+(F.bio?' The biosignature traces you found fuel a new expedition.':F.atm?' Your atmosphere data makes the first human landing possible.':'')+(F.short?' The asteroid shortcut is now an academy legend.':'')+(F.love>2?' '+BF()+' takes your hand as the crystals glow, and neither of you lets go.':' '+BF()+' hugs you tightly: You are the best friend I have ever had.')+(F.dax?' Dax salutes you: Respect, Cadet.':'')+(F.hope?' Hope carried you both here.':'')+' '}
+const BF=()=>G==='m'?'Mira':'Leo',DX=[1,2,4,6,13,14,16,24],vv=x=>typeof x==='function'?x():x;let CS=null,MC=[],WK=0,CL=new THREE.Vector3();
+function mLines(){const c=mi<2?0:mi<10?1:mi<13?2:mi<17?3:mi<20?4:5;return[['Hi! I am '+BF()+'. First day jitters? Me too.','Stick with me. We can figure this place out together.'],['Want to study together after? I will bring snacks from the lounge.','You are good at this. I mean it.'],['My father used to say the stars are messages waiting to be read.','I have not told many people about him. Thank you for listening.'],['Thanks for being there. It means more than you know.','I smile more since I met you. Is that weird?'],['I am scared of the spacewalk, but less scared with you around.','Promise me you will be careful out there.'],['Whatever we find out there, I am glad it is with you.','If we find him, I want you beside me.']][c]}
+function beep(f){if(!AC||!mus)return;const o=AC.createOscillator(),g=AC.createGain(),n=AC.currentTime;o.frequency.value=f;g.gain.setValueAtTime(.08,n);g.gain.exponentialRampToValueAtTime(.001,n+.3);o.connect(g);g.connect(AC.destination);o.start();o.stop(n+.35)}
+function cine(sh,done){CS={s:sh,i:-1,t:0,d:done};busy=true;$('dlg').style.display='none';document.body.classList.add('cin');S.fog.far=500;C.position.set(sh[0].c[0],sh[0].c[1],sh[0].c[2]);CL.set(sh[0].l[0],sh[0].l[1],sh[0].l[2]);nextShot()}
+function nextShot(){if(!CS)return;CS.i++;if(CS.i>=CS.s.length){document.body.classList.remove('cin');S.fog.far=110;const d=CS.d;CS=null;if(d)d();return}const s=CS.s[CS.i];CS.t=0;$('sub').innerHTML='<b>'+vv(s.w)+'</b>'+vv(s.t)}
+function skipC(){if(CS){CS.i=CS.s.length-1;nextShot()}}
+const PRE={0:[{c:[0,34,-55],l:[0,32,-150],w:'NARRATOR',t:'Year 2147. Astra Nexus Academy, humanity’s school among the stars.',d:5},{c:[34,24,-100],l:[0,30,-150],w:'NARRATOR',t:'Here, the next generation of explorers learns to reach beyond the Sun.',d:5},{c:[0,4,45],l:[0,3,10],w:'NARRATOR',t:'You arrive with one bag, a thousand questions, and a quiet hope of belonging.',d:5},{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:()=>'Hi! You look as nervous as I feel. I am '+BF()+'. Want to be first-day survivors together?',d:6}],
+1:[{c:[4,3.4,20],l:[8,2.6,14],w:'DAX',t:'So you are the new cadet. Try to keep up. I am the best pilot in this academy.',d:5},{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:'Ignore him. That is Dax. All talk... mostly.',d:4.5}],
+2:[{c:[-3,3.4,21],l:[-7,2.6,15],w:'DR. NOVA REYES',t:'This specimen arrived sealed in an old expedition crate. Handle it gently.',d:5},{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:'An old expedition? I wonder which one.',d:4}],
+10:[{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:'My father, Captain Elias Chen, vanished on the Meridian expedition when I was nine.',d:6},{c:[2,3,26],l:[1.7,2.5,21.5],w:()=>BF().toUpperCase(),t:'Every time I see a planet, I wonder if he is looking at the same sky.',d:6}],
+13:[{c:[4,3.4,20],l:[8,2.6,14],w:'DAX',t:'Do not slow me down, rookie. I am taking the rover first.',d:4.5},{c:[-3,3.4,21],l:[-7,2.6,15],w:'COMMANDER VEGA',t:'Moon duty. Stay on comms and watch each other. All of you.',d:5}],
+19:[{c:[0,6,34],l:[0,3,10],w:'AGENT ORION',t:'Beacon recovered. Registry: ISV Meridian.',d:4},{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:'Meridian... that was my father’s ship.',d:5},{c:[-3,3.4,21],l:[-7,2.6,15],w:'COMMANDER VEGA',t:'Stay with your friend, Cadet. We will find out what happened.',d:5}],
+20:[{c:[0,6,22],l:[0,6,-21],w:'AGENT ORION',t:'The transponder signature matches the Meridian.',d:4.5},{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:'It is alive. After eleven years... it is alive.',d:5}],
+22:[{c:[0,9,12],l:[0,6,-13],w:'COMMANDER VEGA',t:'Astra-1 is fuelled and ready. This is not a drill, Cadet.',d:5},{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:()=>F.love>1?'Whatever happens, I am glad you are coming. Hold my hand? Just for a second.':'Thank you for coming with me. Truly.',d:6}],
+23:[{c:[10,6,-4],l:[18,6,-16],w:'NARRATOR',t:'The academy fades behind you. Ahead lies only the dark, and one faint signal.',d:5},{c:[8,8,4],l:[18,6,-16],w:'AGENT ORION',t:'Welcome to deep space, Cadet. Navigation systems active.',d:4.5}],
+24:[{c:[0,14,30],l:[19,4,-4],w:'NARRATOR',t:'The signal leads to a violet world of glowing crystal. Somewhere here lies the Meridian.',d:5.5},{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:'Dad... I am coming.',d:4}]};
+const POST={4:[{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:'Thanks for studying with me. I always feel one step behind.',d:5},{c:[2,3,26],l:[1.7,2.4,21.5],w:'YOU',t:'You are not behind. You just needed a lab partner.',d:4.5},{c:[2,3.2,27],l:[1.7,2.3,21.5],w:()=>BF().toUpperCase(),t:'Lab partner. I like that.',d:4}],
+16:[{c:[4,3.4,20],l:[8,2.6,14],w:'DAX',t:()=>F.dax?'Back on Mars you helped me when you did not have to. I will not forget it. Call me a friend.':'Look... I was rude. Maybe we can start over.',d:6}],
+24:[{c:[0,6,-4],l:[0,3,-14],w:'RECORDING',t:'This is Captain Elias Chen of the Meridian. If anyone hears this, we are alive. Tell my child I never stopped looking up.',d:8},{c:[2,3.2,27],l:[1.7,2.3,21.5],w:'NARRATOR',t:()=>F.love>2?BF()+' takes your hand under the glowing crystals, and neither of you lets go.':BF()+' hugs you tightly and whispers: You are the best friend I have ever had.',d:7}]};
+const MK={atrium:['terminal','console'],bio:['microscope','console','scanner','tank'],chem:['tank','console','scanner'],phys:['console','scanner','terminal'],plan:['terminal','antenna','console'],moon:['drill','antenna','console'],mars:['drill','scanner','antenna'],europa:['drill','scanner','console'],titan:['drill','tank','antenna'],eva:['airlock','console','scanner'],deep:['console','terminal'],exo:['scanner','drill','antenna'],class:['terminal','console'],cmd:['console','terminal','antenna'],dock:['console','tank','scanner','terminal']};
+function mkMachine(kind){const g=new THREE.Group(),mt=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.4,metalness:.6},o||{})),ad=(geo,m,x,y,z,p)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;(p||g).add(o);return o},scr=mt(0x06202e,{emissive:0x38d4ff,emissiveIntensity:.5}),lamp=ad(new THREE.SphereGeometry(.18,10,10),new THREE.MeshBasicMaterial({color:0x444444}),0,2.9,0),u=g.userData,hz=mt(0x2a3350);u.lamp=lamp;u.scr=scr;ad(new THREE.CylinderGeometry(1.7,1.9,.2,24),hz,0,.1,0);
+if(kind==='console'){ad(new THREE.BoxGeometry(2.6,1.1,1.2),mt(0x1d2a4a),0,.75,0);ad(new THREE.BoxGeometry(2.2,.9,.1),scr,0,1.75,-.35).rotation.x=-.3;ad(new THREE.BoxGeometry(1.8,.08,.5),mt(0x38d4ff,{emissive:0x38d4ff,emissiveIntensity:.5}),0,1.32,.25);lamp.position.set(1.1,1.5,.2)}
+if(kind==='microscope'){ad(new THREE.BoxGeometry(2.2,.5,1.4),mt(0x1d2a4a),0,.45,0);ad(new THREE.CylinderGeometry(.12,.12,2,10),mt(0xcccccc),0,1.4,-.5);const tb=ad(new THREE.CylinderGeometry(.22,.28,1.4,12),mt(0xeeeeee),0,1.8,0);tb.rotation.x=.4;ad(new THREE.CylinderGeometry(.5,.5,.1,16),scr,0,.75,.2);u.mov=(t,s)=>{tb.position.y=1.8+(s?Math.sin(t*(s>2?12:2))*.05:0)};lamp.position.set(.9,1.1,.4)}
+if(kind==='scanner'){ad(new THREE.BoxGeometry(.4,2.6,.4),mt(0x1d2a4a),-1.4,1.3,0);ad(new THREE.BoxGeometry(.4,2.6,.4),mt(0x1d2a4a),1.4,1.3,0);const r=ad(new THREE.TorusGeometry(1.2,.12,8,32),mt(0x38d4ff,{emissive:0x38d4ff,emissiveIntensity:.7}),0,1.8,0);ad(new THREE.BoxGeometry(2,.1,.8),scr,0,.35,0);u.mov=(t,s)=>{r.rotation.y=s?t*(s>2?8:1.5):0;r.position.y=1.8+(s?Math.sin(t*2)*.3:0)};lamp.position.y=3.2}
+if(kind==='tank'){ad(new THREE.CylinderGeometry(.9,.9,2.6,20),mt(0x99ddff,{transparent:true,opacity:.28,metalness:.1,roughness:.05}),0,1.5,0);const lq=ad(new THREE.CylinderGeometry(.8,.8,1.8,20),mt(0x33ff99,{emissive:0x22aa66,emissiveIntensity:.6,transparent:true,opacity:.8}),0,1.2,0);ad(new THREE.CylinderGeometry(1,1,.2,20),hz,0,2.9,0);ad(new THREE.CylinderGeometry(.1,.1,1,8),mt(0x888899),1.2,.8,0);u.mov=(t,s)=>{lq.scale.y=1+(s?Math.sin(t*(s>2?10:3))*.08:0)};lamp.position.y=3.2}
+if(kind==='terminal'){ad(new THREE.CylinderGeometry(.4,.6,1.2,12),mt(0x1d2a4a),0,.8,0);const h=ad(new THREE.OctahedronGeometry(.7),mt(0x38d4ff,{wireframe:true,emissive:0x38d4ff,emissiveIntensity:.8}),0,2.2,0);u.mov=(t,s)=>{h.rotation.y=t*(s>2?5:1);h.rotation.x=t*.6}}
+if(kind==='drill'){ad(new THREE.BoxGeometry(.5,3,.5),mt(0x555a6a),-.8,1.6,0);ad(new THREE.BoxGeometry(1.6,.4,.5),mt(0x555a6a),0,3,0);const bit=ad(new THREE.ConeGeometry(.2,1.2,8),mt(0xffcc33,{metalness:.9}),0,2.2,0);bit.rotation.x=Math.PI;ad(new THREE.CylinderGeometry(.3,.3,.5,10),scr,1,.45,0);u.mov=(t,s)=>{bit.position.y=2.2-(s?Math.abs(Math.sin(t*(s>2?10:2)))*1.4:0)};lamp.position.set(-.8,3.3,0)}
+if(kind==='antenna'){ad(new THREE.CylinderGeometry(.15,.25,2.4,8),mt(0x777c8a),0,1.3,0);const ds=new THREE.Group();ds.position.y=2.6;g.add(ds);const d=ad(new THREE.SphereGeometry(1.2,20,10,0,6.283,0,1.2),mt(0xdddddd,{side:2}),0,0,0,ds);d.rotation.x=-1.1;ad(new THREE.CylinderGeometry(.05,.05,1,6),mt(0xffffff),0,.5,-.5,ds);u.mov=(t,s)=>{ds.rotation.y=s?t*(s>2?3:.6):0};lamp.position.y=3.8}
+if(kind==='airlock'){ad(new THREE.BoxGeometry(.4,3.4,.6),hz,-1.4,1.7,0);ad(new THREE.BoxGeometry(.4,3.4,.6),hz,1.4,1.7,0);ad(new THREE.BoxGeometry(3.2,.4,.6),hz,0,3.4,0);const a=ad(new THREE.BoxGeometry(1.2,3,.3),mt(0x445),-.6,1.6,0),b=ad(new THREE.BoxGeometry(1.2,3,.3),mt(0x445),.6,1.6,0);ad(new THREE.BoxGeometry(.5,.5,.1),scr,1.9,1.4,.3);u.mov=(t,s,m)=>{const o=m.userData.o=Math.max(0,Math.min(1,(m.userData.o||0)+(s===2?.02:-.02)));a.position.x=-.6-o*.9;b.position.x=.6+o*.9};lamp.position.y=3.8}
+return g}
+function spawnMachines(){MC=[];const m=M[mi],n=m[4].length,ks=MK[m[0]]||['console'];for(let i=0;i<n;i++){const g=mkMachine(ks[i%ks.length]),p=pos(i,n);g.position.set(p.x,0,p.z);g.rotation.y=Math.atan2(-p.x,22-p.z);W.add(g);MC.push(g)}}
+function academyExt(){const g=new THREE.Group(),m=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.4,metalness:.6},o||{})),ring=new THREE.Mesh(new THREE.TorusGeometry(26,3,16,64),m(0x8aa0c8));ring.rotation.x=Math.PI/2;g.add(ring,new THREE.Mesh(new THREE.SphereGeometry(8,24,24),m(0xe8eef8)),new THREE.Mesh(new THREE.CylinderGeometry(2,3,40,12),m(0xcfd8ee)));
+for(let i=0;i<6;i++){const a=i*Math.PI/3,sp=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,24,8),m(0x667799));sp.position.set(Math.cos(a)*13,0,Math.sin(a)*13);sp.rotation.z=Math.PI/2;sp.rotation.y=-a;g.add(sp)}
+for(let i=0;i<40;i++){const a=i/40*6.283,w=new THREE.Mesh(new THREE.BoxGeometry(1.2,1.2,1.2),new THREE.MeshBasicMaterial({color:0x7fe3ff}));w.position.set(Math.cos(a)*26,2.6,Math.sin(a)*26);g.add(w)}
+g.traverse(c=>{if(c.material)c.material.fog=false});g.position.set(0,32,-150);g.rotation.x=.35;ups.push(t=>g.rotation.y=t*.05);W.add(g);const eb=add(new THREE.SphereGeometry(70,48,48),-60,-30,-230,0xffffff,{map:T('#2a6cff',0,'#2e8b4a'),emissive:0x0a2a66});eb.material.fog=false}
+const REAL=`<span class='real'>REALITY:</span>`;
+const FACT=['Nobody explores alone. Every great mission begins with someone saying hello.','Eratosthenes measured Earth’s size around 240 BC with just a stick and a shadow.','Every cell in your body holds about 2 metres of DNA, coiled up tight.','Astronauts exercise two hours a day because muscles and bones weaken in microgravity.','Uncoiled, the DNA in one person could stretch to the Sun and back many times.','Water is the only common substance found naturally as solid, liquid and gas on Earth.','The ISS makes oxygen by splitting water with electricity, just like your simulation.','Galileo’s pendulum insight led to the first accurate clocks.','Satellites are always falling around Earth. Speed keeps them from landing.','A rainbow is sunlight split by raindrops, like Newton’s prism.','Saturn is less dense than water. It would float in a big enough bathtub.','A teaspoon of neutron star would weigh billions of tonnes.','Voyager 1 has flown since 1977 and still sends data home.','Apollo 15’s hammer-and-feather drop is on video. Anyone can watch the myth die.','Mars sunsets look blue because fine dust scatters light differently there.','Europa may hold more than twice as much water as all of Earth’s oceans.','Titan’s air is so thick and its gravity so low that human-powered flight might be possible.','Emotion tip: calm breathing is a skill. Practise before the pressure arrives.','Engineers say: slow is smooth, smooth is fast. Careful order beats hurry.','Emotion tip: grief is love with nowhere to go. Listening matters more than fixing.','Radio signals from Voyager 1 take about 22 hours to reach us.','Thousands of exoplanets are known. The first around a Sun-like star was found in 1995.','Rockets carry their own oxygen, so they work in the vacuum of space.','Sunlight takes 8 minutes to reach us. Looking out is looking back in time.','Emotion tip: courage is not the absence of fear. It is moving forward alongside it.'];
+function gOpen(h,i){$('gh').textContent=h;$('gi').innerHTML=i;$('gc').innerHTML='';$('gs').innerHTML='';$('gm').style.display='block'}
+function gMsg(t){$('gs').innerHTML=t;beep(220)}
+function gClose(ok){cancelAnimationFrame(GR);$('gm').style.display='none';WK=0;const d=GD;GD=null;if(ok&&d)d();else busy=false}
+function gDone(sp){cancelAnimationFrame(GR);beep(880);$('gs').innerHTML='✅ '+(sp.edu||'Operation successful.')+`<div><button onclick='gClose(1)'>Continue ▶</button></div>`}
+let GR=0,GD=null;
+function hold(b,f){['mousedown','touchstart'].forEach(e=>b.addEventListener(e,v=>{f(1);v.preventDefault()}));['mouseup','mouseleave','touchend'].forEach(e=>b.addEventListener(e,()=>f(0)))}
+function G_dial(sp){gOpen(sp.h||'Calibrate',sp.i||'Turn the dial until the signal is clear.');$('gc').innerHTML=`<canvas id='cv' width=520 height=110></canvas><input id='rg' type='range' min=0 max=100 value=0>`;const x=$('cv').getContext('2d'),tg=20+Math.random()*60|0;let v=0,ok=0;$('rg').oninput=e=>{v=+e.target.value;if(Math.abs(v-tg)<=3&&!ok){ok=1;gDone(sp)}};const f=n=>{const er=Math.abs(v-tg)/100*45,t=n/200;x.fillStyle='#020816';x.fillRect(0,0,520,110);x.strokeStyle=er<3?'#33ff99':'#38d4ff';x.beginPath();for(let i=0;i<520;i+=3){const y=55+Math.sin(i*.04+t)*18+(Math.random()-.5)*er*2;i?x.lineTo(i,y):x.moveTo(i,y)}x.stroke();if(!ok)GR=requestAnimationFrame(f)};GR=requestAnimationFrame(f)}
+function G_timing(sp){gOpen(sp.h||'Drill alignment','Press STOP when the marker is inside the green zone.');$('gc').innerHTML=`<canvas id='cv' width=520 height=60></canvas><button id='st'>STOP</button>`;const x=$('cv').getContext('2d'),z=.3+Math.random()*.4;let p=0,dr=1,hit=0;const f=()=>{p+=dr*.014;if(p>1||p<0)dr*=-1;x.fillStyle='#020816';x.fillRect(0,0,520,60);x.fillStyle='#1e7a3a';x.fillRect(z*500,10,70,40);x.fillStyle='#ff9d3c';x.fillRect(p*500,5,6,50);if(!hit)GR=requestAnimationFrame(f)};f();$('st').onclick=()=>{if(p*500>=z*500-3&&p*500<=z*500+70){hit=1;gDone(sp)}else gMsg('Missed! Try again.')}}
+function G_bal(sp){gOpen(sp.h||'Stabilise the tank','HOLD the pump button to raise the level. It leaks when you let go. Keep it inside the green band for 2 seconds.');$('gc').innerHTML=`<canvas id='cv' width=520 height=80></canvas><button id='pb'>Hold to pump</button>`;const x=$('cv').getContext('2d');let L=10,h=0,c=0;hold($('pb'),v=>h=v);const f=()=>{L=Math.max(0,Math.min(100,L+(h?.7:-.35)));x.fillStyle='#020816';x.fillRect(0,0,520,80);x.fillStyle='#1e7a3a';x.fillRect(300,5,100,70);x.fillStyle='#33ff99';x.fillRect(0,20,L*5,40);c=(L>=60&&L<=80)?c+1:0;if(c>120){gDone(sp);return}GR=requestAnimationFrame(f)};f()}
+function G_seq(sp){gOpen(sp.h||'Enter access code','Press Show, watch the lights, then repeat the pattern.');const cs=['#ff5577','#55ddff','#ffdd55','#66ff99'],q=[0,1,2].map(()=>Math.random()*4|0);let k=0,ok=false;$('gc').innerHTML=`<div class='row' id='pd'>${cs.map((c,i)=>`<button style='background:${c};flex:1;height:60px;opacity:.5'></button>`).join('')}</div><button id='go'>Show pattern</button>`;const bs=[...$('pd').children],fl=i=>{bs[i].style.opacity=1;setTimeout(()=>bs[i].style.opacity=.5,350);beep(300+i*150)};$('go').onclick=()=>{ok=false;k=0;q.forEach((v,j)=>setTimeout(()=>fl(v),j*600));setTimeout(()=>ok=true,q.length*600)};bs.forEach((b,i)=>b.onclick=()=>{if(!ok)return;fl(i);if(i!==q[k]){k=0;gMsg('Wrong. Press Show pattern again.')}else if(++k===q.length)gDone(sp)})}
+function G_order(sp){gOpen(sp.h,sp.i);const it=sp.items,sh=it.map((x,i)=>[x,i]).sort(()=>Math.random()-.5);let k=0;$('gc').innerHTML=`<div class='row'>${sh.map(a=>`<button data-k='${a[1]}'>${a[0]}</button>`).join('')}</div>`;[...$('gc').querySelectorAll('button')].forEach(b=>b.onclick=()=>{if(+b.dataset.k===k){b.disabled=true;b.style.opacity=.4;beep(500+k*60);if(++k===it.length)gDone(sp)}else gMsg('Not that one. Think about the correct order.')})}
+function G_quiz(sp){gOpen(sp.h||'Myth or Reality?',sp.myth?`<span class='myth'>MYTH?</span> ${sp.myth}`:sp.q);$('gc').innerHTML=`<div class='row'>${sp.o.map((o,i)=>`<button class='s' data-i='${i}'>${o}</button>`).join('')}</div>`;[...$('gc').querySelectorAll('button')].forEach(b=>b.onclick=()=>{if(+b.dataset.i===sp.c)gDone(sp);else gMsg('Not quite. Think again, scientist.')})}
+function G_drop(sp){gOpen('Galileo’s Falling Bodies',`<span class='myth'>MYTH</span> Heavy things fall faster than light things (Aristotle, 300 BC). Test it: drop a hammer and a feather on Earth, then on the Moon.`);$('gc').innerHTML=`<canvas id='cv' width=520 height=200></canvas><div class='row'><button id='e'>Drop on Earth (air)</button><button id='m'>Drop on Moon (vacuum)</button></div>`;const x=$('cv').getContext('2d'),H=1.5;const go=moon=>{cancelAnimationFrame(GR);const g=moon?1.62:9.81,s=[{y:0,v:0,d:0,t:0,k:moon?0:.002},{y:0,v:0,d:0,t:0,k:moon?0:2.2}];let last=performance.now();const draw=()=>{x.fillStyle=moon?'#444':'#173a6a';x.fillRect(0,0,520,200);x.fillStyle=moon?'#999':'#2a6a3a';x.fillRect(0,180,520,20);s.forEach((o,i)=>{const px=150+i*220,py=10+o.y/H*150;x.fillStyle=i?'#fff':'#c0c8d8';i?x.fillRect(px,py,40,10):x.fillRect(px,py,30,22)});x.fillStyle='#fff';x.fillText('Hammer',140,195);x.fillText('Feather',365,195)};const f=n=>{const dt=Math.min((n-last)/1000,.05);last=n;s.forEach(o=>{if(!o.d){o.v+=(g-o.k*o.v*Math.abs(o.v))*dt;o.y+=o.v*dt;o.t+=dt;if(o.y>=H){o.y=H;o.d=1}}});draw();if(!(s[0].d&&s[1].d))GR=requestAnimationFrame(f);else{gMsg('Hammer: '+s[0].t.toFixed(2)+' s   Feather: '+s[1].t.toFixed(2)+' s'+(moon?'':' — air resistance slows the feather! Now try the Moon.'));if(moon)gDone(sp)}};GR=requestAnimationFrame(f)};$('e').onclick=()=>go(0);$('m').onclick=()=>go(1)}
+function G_orbit(sp){gOpen('Newton’s Cannonball','Isaac Newton imagined a cannon on a very high mountain. Fire faster and faster. Can you make the ball miss the ground forever? Find a stable orbit.');$('gc').innerHTML=`<canvas id='cv' width=520 height=260></canvas><input id='rg' type='range' min=3 max=13 step=.1 value=5><div id='vv'>Speed: 5.0 km/s</div><button id='f'>Fire!</button>`;const x=$('cv').getContext('2d'),sc=.0075;$('rg').oninput=e=>$('vv').textContent='Speed: '+(+e.target.value).toFixed(1)+' km/s';const base=()=>{x.fillStyle='#020816';x.fillRect(0,0,520,260);x.fillStyle='#2a6cff';x.beginPath();x.arc(260,130,6371*sc,0,7);x.fill()};base();$('f').onclick=()=>{cancelAnimationFrame(GR);base();let px=0,py=-6471,vx=+$('rg').value,vy=0,ang=0,pa=-1.5708;x.strokeStyle='#ffcc33';x.beginPath();x.moveTo(260,130+py*sc);const st=()=>{for(let i=0;i<10;i++){const r=Math.hypot(px,py),a=-398600/(r*r*r);vx+=a*px*12;vy+=a*py*12;px+=vx*12;py+=vy*12;const na=Math.atan2(py,px);let d=na-pa;if(d>3.14)d-=6.283;if(d<-3.14)d+=6.283;ang+=Math.abs(d);pa=na;x.lineTo(260+px*sc,130+py*sc);if(r<6371){x.stroke();gMsg('Crash! Too slow: gravity wins. This is how a thrown ball behaves.');return}if(r>60000){x.stroke();gMsg('Escaped! Above 11.2 km/s you leave Earth entirely. Try slower.');return}if(ang>6.4){x.stroke();gDone(sp);return}}x.stroke();GR=requestAnimationFrame(st)};st()}}
+function G_pend(sp){gOpen('Galileo’s Pendulum','Legend says young Galileo watched a swinging lamp in Pisa Cathedral and timed it with his pulse. Set the length so one full swing (the period) takes <b>2.0 s</b>. T = 2π√(L/g), g = 9.81 m/s².');$('gc').innerHTML=`<canvas id='cv' width=520 height=200></canvas><input id='rg' type='range' min=20 max=400 value=200><div id='vv'></div><button id='k'>Lock length</button>`;const x=$('cv').getContext('2d'),L=()=>$('rg').value/100,T=()=>2*Math.PI*Math.sqrt(L()/9.81),u=()=>$('vv').innerHTML='Length: <b>'+L().toFixed(2)+' m</b> — period: <b>'+T().toFixed(2)+' s</b>';$('rg').oninput=u;u();const f=n=>{const t=n/1000,a=.6*Math.cos(2*Math.PI*t/T()),len=L()*45,bx=260+Math.sin(a)*len,by=10+Math.cos(a)*len;x.fillStyle='#020816';x.fillRect(0,0,520,200);x.strokeStyle='#aaa';x.beginPath();x.moveTo(260,10);x.lineTo(bx,by);x.stroke();x.fillStyle='#ff9d3c';x.beginPath();x.arc(bx,by,12,0,7);x.fill();GR=requestAnimationFrame(f)};GR=requestAnimationFrame(f);$('k').onclick=()=>Math.abs(T()-2)<.06?gDone(sp):gMsg('Period is '+T().toFixed(2)+' s. A longer rod swings slower.')}
+function G_rocket(sp){gOpen('Tsiolkovsky’s Rocket Equation','<span class=\'myth\'>MYTH</span> Rockets push against the air. <span class=\'real\'>REALITY:</span> they push against their own exhaust (Newton’s 3rd law), so they work best in vacuum. Orbit needs Δv ≥ 7.8 km/s. With exhaust speed 3.0 km/s, Δv = 3.0 × ln(start mass ÷ end mass). Choose the fuel share.');$('gc').innerHTML=`<canvas id='cv' width=520 height=200></canvas><input id='rg' type='range' min=50 max=96 value=70><div id='vv'></div><button id='f'>Launch</button>`;const x=$('cv').getContext('2d'),dv=()=>3*Math.log(1/(1-$('rg').value/100)),u=()=>$('vv').innerHTML='Fuel '+$('rg').value+'% of launch mass: Δv = <b>'+dv().toFixed(1)+' km/s</b>';$('rg').oninput=u;u();const draw=(y,fl)=>{x.fillStyle='#020816';x.fillRect(0,0,520,200);x.fillStyle='#2a5a2a';x.fillRect(0,185,520,15);const py=180-y;x.fillStyle='#e8eef8';x.fillRect(250,py-40,20,40);x.fillStyle='#ff9d3c';x.beginPath();x.moveTo(250,py-40);x.lineTo(260,py-58);x.lineTo(270,py-40);x.fill();if(fl){x.fillStyle='#ffaa33';x.fillRect(255,py,10,10+Math.random()*14)}};draw(0,0);$('f').onclick=()=>{cancelAnimationFrame(GR);const ok=dv()>=7.8,top=ok?170:Math.min(150,dv()/7.8*140);let y=0,up=1;const f=()=>{if(up){y+=3;if(y>=top){up=0;if(ok){draw(y,0);gDone(sp);return}}}else{y-=3;if(y<=0){draw(0,0);gMsg('Out of fuel at Δv = '+dv().toFixed(1)+' km/s. Orbit needs 7.8. Raise the fuel share.');return}}draw(y,up);GR=requestAnimationFrame(f)};f()}}
+function G_dilate(sp){gOpen('Einstein: Time Is Not Constant','<span class=\'myth\'>MYTH</span> Time ticks the same for everyone. Einstein showed moving clocks run slow. Set your speed so that only 1 year passes for you while 2 years pass on Earth.');$('gc').innerHTML=`<input id='rg' type='range' min=0 max=99 value=10><div id='vv'></div><button id='k'>Lock speed</button>`;const g=()=>1/Math.sqrt(1-($('rg').value/100)**2),u=()=>$('vv').innerHTML='Speed: <b>'+$('rg').value+'% of light speed</b><br>γ = '+g().toFixed(2)+' → your 1 year = '+g().toFixed(2)+' Earth years';$('rg').oninput=u;u();$('k').onclick=()=>Math.abs(g()-2)<.08?gDone(sp):gMsg('γ = '+g().toFixed(2)+'. You need γ ≈ 2 (about 87% of light speed).')}
+function G_eratos(sp){gOpen('Eratosthenes Measures the Earth','<span class=\'myth\'>MYTH</span> Ancient people thought the Earth was flat. <span class=\'real\'>REALITY:</span> around 240 BC Eratosthenes measured it. At noon in Syene the Sun is overhead. In Alexandria, 800 km north, a stick casts a shadow at 7.2°, which is 1/50 of a full circle. Compute Earth’s circumference in km.');$('gc').innerHTML=`<canvas id='cv' width=520 height=120></canvas><div class='row'><input id='n' type='number' placeholder='km' style='padding:8px;border-radius:6px;width:140px'><button id='k'>Check</button></div>`;const x=$('cv').getContext('2d');x.fillStyle='#020816';x.fillRect(0,0,520,120);x.strokeStyle='#ffcc33';for(let i=0;i<5;i++){x.beginPath();x.moveTo(90+i*85,0);x.lineTo(90+i*85,70);x.stroke()}x.fillStyle='#2a6cff';x.beginPath();x.arc(260,330,250,0,7);x.fill();x.fillStyle='#fff';x.fillText('Parallel sunrays',20,20);x.fillText('Syene',180,100);x.fillText('Alexandria 800 km, 7.2°',300,100);$('k').onclick=()=>{const v=+$('n').value;v>=38000&&v<=42000?gDone(sp):gMsg('Hint: (360 ÷ 7.2) × 800 km.')}}
+function G_hz(sp){gOpen('The Goldilocks Zone','<span class=\'myth\'>MYTH</span> Earth is the only place that could suit life. Place the planet where liquid water can exist: not too hot, not too cold.');$('gc').innerHTML=`<canvas id='cv' width=520 height=130></canvas><input id='rg' type='range' min=30 max=300 value=60><div id='vv'></div><button id='k'>Lock orbit</button>`;const x=$('cv').getContext('2d'),d=()=>$('rg').value/100,u=()=>{const T=278/Math.sqrt(d())-273;x.fillStyle='#020816';x.fillRect(0,0,520,130);x.fillStyle='rgba(60,200,90,.25)';x.fillRect(30+.95*150,0,.45*150,130);x.fillStyle='#ffcc33';x.beginPath();x.arc(30,65,22,0,7);x.fill();x.fillStyle=T>100?'#ff5533':T<-30?'#cfe8ff':'#2a9d5a';x.beginPath();x.arc(30+d()*150,65,12,0,7);x.fill();$('vv').innerHTML='Distance: <b>'+d().toFixed(2)+' AU</b> — surface ≈ '+Math.round(T)+' °C'};$('rg').oninput=u;u();$('k').onclick=()=>d()>=.95&&d()<=1.4?gDone(sp):gMsg('Too hot or too cold for liquid water. Aim for the green band.')}
+function G_pair(sp){gOpen('DNA Base Pairing','Rosalind Franklin’s X-ray images helped reveal the double helix. Rule: A pairs with T, and C pairs with G. Build the complementary strand.');const q=Array.from({length:6},()=>'ATGC'[Math.random()*4|0]),cm={A:'T',T:'A',G:'C',C:'G'};let k=0;$('gc').innerHTML=`<div id='sq' style='font:700 20px monospace;letter-spacing:5px'></div><div class='row'>${['A','T','G','C'].map(b=>`<button data-b='${b}'>${b}</button>`).join('')}</div>`;const u=()=>$('sq').innerHTML='Template: '+q.join('')+'<br>Partner:&nbsp;&nbsp;'+q.slice(0,k).map(b=>cm[b]).join('')+'_'.repeat(6-k);u();[...$('gc').querySelectorAll('button')].forEach(b=>b.onclick=()=>{if(b.dataset.b===cm[q[k]]){k++;u();beep(500+k*50);if(k===6)gDone(sp)}else gMsg('Remember: A pairs with T, C pairs with G.')})}
+function G_mol(sp){gOpen('Build '+sp.n,sp.i);const c={H:0,O:0,C:0};$('gc').innerHTML=`<div id='ct' style='font-size:18px'></div><div class='row'>${['H','O','C'].map(a=>`<button data-a='${a}'>+ ${a}</button>`).join('')}<button class='s' id='rs'>Reset</button><button id='ck'>Check</button></div>`;const u=()=>$('ct').textContent='Atoms: H×'+c.H+'  O×'+c.O+'  C×'+c.C;u();[...$('gc').querySelectorAll('button[data-a]')].forEach(b=>b.onclick=()=>{c[b.dataset.a]++;u();beep(600)});$('rs').onclick=()=>{c.H=c.O=c.C=0;u()};$('ck').onclick=()=>['H','O','C'].every(a=>c[a]===(sp.need[a]||0))?gDone(sp):gMsg('Not quite. Hint: '+sp.hint)}
+function G_eq(sp){gOpen('Balance the Equation','Antoine Lavoisier showed that matter is never created or destroyed. Balance: <b>a H₂O → b H₂ + c O₂</b>. Both sides need equal atoms.');$('gc').innerHTML=`<div class='row' style='align-items:center'><input id='a' type='number' min=1 max=4 value=1 style='width:60px'>H₂O → <input id='b' type='number' min=1 max=4 value=1 style='width:60px'>H₂ + <input id='c' type='number' min=1 max=4 value=1 style='width:60px'>O₂</div><div id='ct'></div><button id='ck'>Check</button>`;const v=i=>+$(i).value,u=()=>$('ct').textContent='Left: H×'+2*v('a')+' O×'+v('a')+'   Right: H×'+2*v('b')+' O×'+2*v('c');['a','b','c'].forEach(i=>$(i).oninput=u);u();$('ck').onclick=()=>v('a')===v('b')&&v('a')===2*v('c')?gDone(sp):gMsg('Atoms do not match yet.')}
+function G_breath(sp){gOpen('Box Breathing: Steady the Mind','Astronauts train to stay calm under stress. HOLD the button while the circle grows (breathe in) and RELEASE while it shrinks (breathe out). Do 2 full breaths.');$('gc').innerHTML=`<canvas id='cv' width=520 height=200></canvas><button id='bt2'>Hold to inhale</button>`;const x=$('cv').getContext('2d');let h=0,t0=performance.now(),ok=0,tot=0;hold($('bt2'),v=>h=v);const f=n=>{const t=(n-t0)/1000,ph=(t%6)/6,inh=ph<.5,r=40+(inh?ph*2:(1-ph)*2)*50;tot++;if(!!h===inh)ok++;x.fillStyle='#020816';x.fillRect(0,0,520,200);x.fillStyle=inh?'#38d4ff':'#ff9d3c';x.beginPath();x.arc(260,100,r,0,7);x.fill();x.fillStyle='#fff';x.textAlign='center';x.fillText(inh?'Breathe in...':'Breathe out...',260,105);if(t>12){const sc=ok/tot;if(sc>.6)gDone(sp);else{gMsg('Out of rhythm ('+Math.round(sc*100)+'%). Slower and steadier. Restarting...');setTimeout(()=>{t0=performance.now();ok=tot=0;GR=requestAnimationFrame(f)},1800)}return}GR=requestAnimationFrame(f)};GR=requestAnimationFrame(f)}
+const GM={dial:G_dial,timing:G_timing,bal:G_bal,seq:G_seq,order:G_order,quiz:G_quiz,drop:G_drop,orbit:G_orbit,pend:G_pend,rocket:G_rocket,dilate:G_dilate,eratos:G_eratos,hz:G_hz,pair:G_pair,mol:G_mol,eq:G_eq,breath:G_breath};
+function play(sp,cb){GD=cb;busy=true;WK=1;GM[sp.t](sp)}
+const KD={console:{t:'seq',h:'Console access code',edu:'Controllers use codes and checklists so no single mistake can cause failure.'},terminal:{t:'seq',h:'Terminal handshake',edu:'Systems verify each other with handshakes. Trust, but verify.'},microscope:{t:'dial',h:'Focus the microscope',i:'Turn the focus knob until the image is sharp.',edu:'Robert Hooke coined the word cell in 1665 after looking through a microscope.'},scanner:{t:'dial',h:'Align the scanner',i:'Sweep until the noise clears.',edu:'Scientists reduce noise to find the real signal. Patience is a skill.'},antenna:{t:'dial',h:'Tune the antenna',i:'Find the carrier frequency.',edu:'Radio telescopes tune to specific frequencies, like finding a station on a radio.'},tank:{t:'bal'},drill:{t:'timing',edu:'Sampling must be precise: contamination can ruin evidence of life.'},airlock:{t:'order',h:'Airlock sequence',i:'Click the steps in the safe order.',items:['Seal your visor','Check oxygen','Clip your tether','Test radio','Open outer hatch'],edu:'Real spacewalk crews follow strict checklists. Redundancy saves lives.'}};
+const GS={'0:3':{t:'quiz',myth:'The Great Wall of China is visible from space with the naked eye.',o:['True','False'],c:1,edu:REAL+' It is only about 6 m wide. Astronauts cannot spot it unaided, though city lights at night are easy to see.'},
+'1:4':{t:'eratos',edu:REAL+' Eratosthenes came within about 2% using a stick, a shadow and geometry. Curiosity beats assumption.'},
+'3:2':{t:'quiz',myth:'Floating in space makes bones stronger because they carry no weight.',o:['True','False'],c:1,edu:REAL+' Astronauts lose 1 to 1.5% of bone density a month in space, so they exercise two hours a day.'},
+'4:3':{t:'pair',edu:'A–T and C–G pairing lets cells copy information accurately. Rosalind Franklin’s Photo 51 revealed the helix, though she was rarely credited in her lifetime.'},
+'5:2':{t:'mol',n:'Water (H₂O)',i:'Water has two hydrogen atoms and one oxygen atom.',need:{H:2,O:1},hint:'2 H and 1 O.',edu:'H₂O: about 60% of your body is water.'},
+'5:3':{t:'mol',n:'Carbon dioxide (CO₂)',i:'One carbon atom bonded to two oxygen atoms.',need:{C:1,O:2},hint:'1 C and 2 O.',edu:'Plants turn CO₂ into food and oxygen. Mars’s air is about 95% CO₂.'},
+'5:4':{t:'mol',n:'Oxygen gas (O₂)',i:'Two oxygen atoms bonded together.',need:{O:2},hint:'Just 2 O.',edu:'Before oxygen was understood, people believed fire released a substance called phlogiston.'},
+'6:5':{t:'eq',edu:'Mass is conserved. The ISS splits water with electricity to make breathable oxygen.'},
+'7:2':{t:'pend',edu:'Period depends on length and gravity, not the bob’s weight. On the Moon the same pendulum swings about 2.4 times slower.'},
+'8:4':{t:'orbit',edu:'Orbiting is falling around the Earth and continually missing it. Astronauts float because they are in free-fall, not because gravity is gone.'},
+'9:2':{t:'order',h:'Newton’s Prism',i:'<span class=\'myth\'>MYTH</span> White light is pure and colourless. Newton split it with a prism. Click the colours in rainbow order, starting with red.',items:['Red','Orange','Yellow','Green','Blue','Indigo','Violet'],edu:REAL+' White light is a mix of all colours. Astronomers read a star’s chemistry from its spectrum.'},
+'10:3':{t:'quiz',myth:'Earth has seasons because it is closer to the Sun in summer.',o:['True','False'],c:1,edu:REAL+' Seasons come from Earth’s 23.5° tilt. Earth is actually closest to the Sun in January!'},
+'10:6':{t:'order',h:'Order the Planets',i:'Click the planets from closest to the Sun outward.',items:['Mercury','Venus','Earth','Mars','Jupiter','Saturn','Uranus','Neptune'],edu:'Mnemonic: My Very Educated Mother Just Served Us Noodles. Pluto became a dwarf planet in 2006.'},
+'11:3':{t:'quiz',myth:'A black hole sucks in everything around it like a cosmic vacuum cleaner.',o:['True','False'],c:1,edu:REAL+' Far away, a black hole pulls like any object of the same mass. If the Sun became one, Earth would keep orbiting.'},
+'13:1':{t:'quiz',myth:'There is a permanently dark side of the Moon.',o:['True','False'],c:1,edu:REAL+' The far side gets as much sunlight as the near side. We only see one face because the Moon is tidally locked.'},
+'13:2':{t:'drop',edu:REAL+' Without air, all objects fall together. Astronaut David Scott dropped a hammer and a feather on the Moon in 1971 and they landed at the same time.'},
+'14:3':{t:'quiz',myth:'Mars has canals built by an intelligent civilisation.',o:['True','False'],c:1,edu:REAL+' In 1877 Schiaparelli reported canali, and Percival Lowell turned them into a myth. They were optical illusions. Spacecraft later found dry riverbeds instead, hinting at ancient water.'},
+'15:2':{t:'quiz',myth:'Only planets inside the Goldilocks zone can have liquid water.',o:['True','False'],c:1,edu:REAL+' Europa is far from the Sun, but Jupiter’s tides flex it and keep a hidden ocean liquid.'},
+'17:1':{t:'order',h:'Suit Inspection',i:'Click the checks in the safe order.',items:['Inspect suit seals','Check oxygen supply','Test radio','Clip tether','Close visor'],edu:'Astronauts use buddy-checks: two people verify each other. Asking for help is a strength.'},
+'17:3':{t:'breath',edu:'Slow breathing lowers heart rate and calms the mind. Pilots and astronauts use box breathing under pressure. You can too.'},
+'18:4':{t:'order',h:'Repair Procedure',i:'Click the repair steps in the correct sequence.',items:['Secure tether','Power down the panel','Replace the damaged cell','Test voltage','Power up'],edu:'Never touch a live circuit. In real engineering, the order of steps matters.'},
+'19:4':{t:'dilate',edu:REAL+' GPS satellites move fast and sit higher in Earth’s gravity, so their clocks drift about 38 microseconds a day. Without Einstein’s relativity, GPS would be off by kilometres daily.'},
+'19:5':{t:'quiz',h:'Be There for a Friend',q:'Your friend whispers: I keep thinking, what if my father waited for us and we were too late? What helps most?',o:['Do not worry, it will be fine.','That sounds really painful. I am here, and we will keep looking together.','At least we found the beacon.'],c:1,edu:'Active listening: name the feeling, stay present, and avoid rushing to fix it. Comfort comes from feeling heard.'},
+'20:1':{t:'quiz',myth:'Radio signals from deep space arrive instantly.',o:['True','False'],c:1,edu:REAL+' Radio travels at light speed, which is fast but finite. Voyager 1’s signals take about 22 hours to reach us.'},
+'21:0':{t:'hz',edu:REAL+' Planets in the habitable zone can hold liquid water, but it is only one clue. Thousands of exoplanets have been found since 1995.'},
+'22:2':{t:'rocket',edu:'Newton’s 3rd law: every action has an equal and opposite reaction. Multi-stage rockets drop empty tanks to carry less weight.'},
+'23:1':{t:'quiz',myth:'Explosions in space are loud, like in the movies.',o:['True','False'],c:1,edu:REAL+' Sound needs a medium like air. Space is nearly a vacuum, so it is silent. Astronauts talk by radio.'},
+'24:1':{t:'quiz',myth:'If alien life exists, it must look like humans.',o:['True','False'],c:1,edu:REAL+' Life on Earth ranges from microbes to whales. Alien life, if any, is likely microbial or utterly different.'},
+'24:3':{t:'quiz',h:'A Moment of Truth',q:'Your friend trembles in front of the recording. What do you do?',o:['Stay close, offer a hand, and let your friend feel it.','Rush on to the next task.','Say it is just a recording.'],c:0,edu:'Presence beats words. Emotional support means staying with someone in a hard moment.'}};
+function specFor(){const k=MK[M[mi][0]]||['console'];return GS[mi+':'+oi]||KD[k[oi%k.length]]||KD.console}
+function rocket(x,z,s,c1,c2,fly){const g=new THREE.Group(),mt=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.4,metalness:.5},o||{})),ad=(geo,m,px,py,pz)=>{const o=new THREE.Mesh(geo,m);o.position.set(px,py,pz);o.castShadow=true;g.add(o);return o};ad(new THREE.CylinderGeometry(1.2,1.3,9,20),mt(c1),0,5,0);ad(new THREE.CylinderGeometry(1.22,1.22,.8,20),mt(c2),0,3,0);ad(new THREE.ConeGeometry(1.2,3.2,20),mt(c2),0,11.1,0);ad(new THREE.SphereGeometry(.45,12,12),mt(0x0b1530,{emissive:0x1a6a9a}),0,7.2,1.1);
+for(let i=0;i<3;i++){const a=i*2.094;ad(new THREE.BoxGeometry(.2,2.4,1.8),mt(c2),Math.cos(a)*1.6,1.5,Math.sin(a)*1.6).rotation.y=-a;ad(new THREE.CylinderGeometry(.45,.5,5,12),mt(0xdddddd),Math.cos(a+1.05)*1.7,2.5,Math.sin(a+1.05)*1.7)}
+ad(new THREE.CylinderGeometry(.6,.9,.8,12),mt(0x444455),0,.4,0);const fl=ad(new THREE.ConeGeometry(.9,3,12),new THREE.MeshBasicMaterial({color:0xffaa33,transparent:true,opacity:.85}),0,-1.3,0);fl.rotation.x=Math.PI;fl.visible=!!fly;g.position.set(x,fly?0:.8,z);g.scale.setScalar(s);W.add(g);
+if(fly)ups.push(t=>{g.position.y=((t*.07)%1)*150;fl.scale.y=.8+Math.random()*.5;g.rotation.z=Math.sin(t)*.02});else{add(new THREE.CylinderGeometry(4*s,4.5*s,.8,24),x,.2,z,0x2a3350);add(new THREE.BoxGeometry(.8,12*s,.8),x+2.8*s,6*s,z,0x555a6a);add(new THREE.BoxGeometry(2.4*s,.4,.4),x+1.6*s,10*s,z,0x777c8a)}return g}
+function factBoard(x,z,ry){const cv=document.createElement('canvas');cv.width=512;cv.height=160;const cx=cv.getContext('2d'),tx=new THREE.CanvasTexture(cv);let n=-1;const m=add(new THREE.PlaneGeometry(10,3.1),x,8,z,0xffffff,{map:tx,emissive:0xffffff,emissiveMap:tx,side:2});m.rotation.y=ry;m.castShadow=false;ups.push(t=>{const k=Math.floor(t/9);if(k===n)return;n=k;const f=FACT[Math.abs(k*7+Math.round(x)+mi)%FACT.length].split(' ');cx.fillStyle='#04142c';cx.fillRect(0,0,512,160);cx.strokeStyle='#38d4ff';cx.lineWidth=4;cx.strokeRect(2,2,508,156);cx.fillStyle='#ff9d3c';cx.font='bold 20px sans-serif';cx.fillText('DID YOU KNOW?',16,30);cx.fillStyle='#fff';cx.font='19px sans-serif';let l='',y=62;f.forEach(w=>{if((l+w).length>44){cx.fillText(l,16,y);y+=26;l=''}l+=w+' '});cx.fillText(l,16,y);tx.needsUpdate=true})}
+function nearNPC(){return npcs.find(n=>n.position.distanceTo(P.position)<4.5)}
+function talk(n){const nm=n.userData.name,a=(nm===BF()?mLines():LN[nm])||LN.Cadet,i=n.userData.k=((n.userData.k||0)+1)%a.length;say(a[i],nm,[['Goodbye',()=>busy=false]])}
+function toggleMusic(){mus=!mus;if(!AC)startMusic();else{AC.resume();mg.gain.value=mus?.22:0}$('mb').textContent=mus?'🔊':'🔇'}
+function startMusic(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=mus?.22:0;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1600;mg.connect(lp);lp.connect(AC.destination);const dy=AC.createDelay();dy.delayTime.value=.45;const fb=AC.createGain();fb.gain.value=.45;lp.connect(dy);dy.connect(fb);fb.connect(dy);dy.connect(AC.destination);
+const ch=[[110,165,220,277.2],[87.3,130.8,174.6,220],[98,146.8,196,246.9],[82.4,123.5,164.8,207.7]];
+const tick=()=>{const c=ch[ci++%4].map(f=>f*mood),t=AC.currentTime;c.forEach(f=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.frequency.value=f;o.detune.value=Math.random()*10-5;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05,t+2.5);g.gain.linearRampToValueAtTime(0,t+8.5);o.connect(g);g.connect(mg);o.start(t);o.stop(t+9)});
+for(let i=0;i<16;i++){const o=AC.createOscillator(),g=AC.createGain(),tt=t+i*.5;o.type='sine';o.frequency.value=c[(i*3)%4]*2*(i%5==4?2:1);g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(.09,tt+.02);g.gain.exponentialRampToValueAtTime(.001,tt+1.2);o.connect(g);g.connect(mg);o.start(tt);o.stop(tt+1.3)}};tick();setInterval(tick,8000)}catch(e){}}
+function mkPlayer(){P.clear();mkAstro();return;const c=G=="m"?0x2e7dff:0xff4fa3;
+const b=new THREE.Mesh(new THREE.CylinderGeometry(.5,.6,1.5,16),sm(c));b.position.y=1;P.add(b);
+const h=new THREE.Mesh(new THREE.SphereGeometry(.5,16,16),sm(0xe8e8f0));h.position.y2=0;h.position.y=2.1;P.add(h);
+const v=new THREE.Mesh(new THREE.SphereGeometry(.35,16,16),new THREE.MeshStandardMaterial({color:0x111a33,emissive:0x38d4ff,emissiveIntensity:.5}));v.position.set(0,2.1,.25);P.add(v);
+if(G=="f"){const pt=new THREE.Mesh(new THREE.SphereGeometry(.18,8,8),sm(0x442211));pt.position.set(0,2.2,-.55);P.add(pt)}S.add(P)}
+function add(g,x,y,z,c,o={}){const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.4,metalness:.3},o)));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;W.add(m);return m}
+function build(k){W.clear();ups=[];const [bg,fl,pr]=E[k];S.background=new THREE.Color(bg);S.fog=new THREE.Fog(bg,30,110);
+const f=add(new THREE.CylinderGeometry(30,30,.5,48),0,-.25,0,fl,{metalness:.5,roughness:.3});if(pr=="sta"){f.material.transparent=true;f.material.opacity=.35;const gh=new THREE.GridHelper(60,30,0x38d4ff,0x1a3a6a);W.add(gh)}
+add(new THREE.TorusGeometry(30,.3,8,64),0,0,0,0x38d4ff,{emissive:0x38d4ff}).rotation.x=Math.PI/2;
+if(pr!=='rock'){for(let r=6;r<=24;r+=6){const g=new THREE.Mesh(new THREE.RingGeometry(r-.08,r+.08,64),new THREE.MeshBasicMaterial({color:0x38d4ff,transparent:true,opacity:.35,side:2}));g.rotation.x=-Math.PI/2;g.position.y=.02;W.add(g)}}
+if(pr!=='rock'&&pr!=='sta'){for(let i=0;i<14;i++){const a=i/14*6.283;add(new THREE.BoxGeometry(1.6,16,1.6),Math.cos(a)*31,8,Math.sin(a)*31,0x16264a);add(new THREE.BoxGeometry(.25,15,.25),Math.cos(a)*30.1,8,Math.sin(a)*30.1,0x38d4ff,{emissive:0x38d4ff,emissiveIntensity:1.5})}}
+{const dg=new THREE.BufferGeometry(),dp=[];for(let i=0;i<150;i++)dp.push((Math.random()-.5)*60,Math.random()*18,(Math.random()-.5)*60);dg.setAttribute('position',new THREE.Float32BufferAttribute(dp,3));const dust=new THREE.Points(dg,new THREE.PointsMaterial({size:.15,color:0x9fe8ff,transparent:true,opacity:.7}));W.add(dust);ups.push(t=>dust.rotation.y=t*.03)}
+if(pr==='class'){for(let r=0;r<3;r++)for(let c=-1;c<=1;c++){const x=c*7,z=2-r*5.5;add(new THREE.BoxGeometry(3,.15,1.4),x,1.5,z,0x2a3f66);add(new THREE.BoxGeometry(2.4,.9,.08),x,2,z-.5,0x38d4ff,{emissive:0x38d4ff,emissiveIntensity:.8,transparent:true,opacity:.6});add(new THREE.CylinderGeometry(.1,.1,1.5),x-1.2,.75,z,0x888899);add(new THREE.CylinderGeometry(.1,.1,1.5),x+1.2,.75,z,0x888899);add(new THREE.BoxGeometry(1.1,.15,1.1),x,.9,z+1.4,0x16264a)}
+add(new THREE.BoxGeometry(16,6.5,.3),0,5.5,-18,0x38d4ff,{emissive:0x1a6a9a,transparent:true,opacity:.45});add(new THREE.BoxGeometry(3,1.3,1.2),-9,.65,-9,0x16264a);const ew=add(new THREE.SphereGeometry(6,32,32),22,12,-20,0xffffff,{map:T('#2a6cff',0,'#2e8b4a')});ew.material.fog=false;ups.push(t=>ew.rotation.y=t*.1)}
+if(pr==='cmd'){const cv=document.createElement('canvas');cv.width=512;cv.height=256;const cx=cv.getContext('2d'),tx=new THREE.CanvasTexture(cv);add(new THREE.BoxGeometry(22,9,.4),0,6,-22,0x0a1020);add(new THREE.PlaneGeometry(20,8),0,6,-21.7,0xffffff,{map:tx,emissive:0xffffff,emissiveMap:tx});
+ups.push(t=>{cx.fillStyle='#02121c';cx.fillRect(0,0,512,256);cx.strokeStyle='#1a5a7a';cx.lineWidth=1;for(let i=0;i<8;i++){cx.beginPath();cx.moveTo(0,i*32);cx.lineTo(512,i*32);cx.stroke()}cx.strokeStyle='#7dffb0';cx.lineWidth=3;cx.beginPath();for(let x=0;x<512;x+=4){const y=128+Math.sin(x*.05+t*4)*40*Math.sin(x*.011+t)+Math.sin(x*.21+t*9)*12;x?cx.lineTo(x,y):cx.moveTo(x,y)}cx.stroke();cx.fillStyle='#ff9d3c';cx.font='bold 22px monospace';cx.fillText('UNKNOWN SIGNAL - ANALYSING',20,30);tx.needsUpdate=true});
+add(new THREE.CylinderGeometry(4,4.5,1,32),0,.5,-6,0x16264a);const gl=add(new THREE.IcosahedronGeometry(2,2),0,3,-6,0x38d4ff,{wireframe:true,emissive:0x38d4ff});ups.push(t=>gl.rotation.y=t*.4);
+for(let i=0;i<7;i++){const a=-1.2+i*.4,x=Math.sin(a)*16,z=-Math.cos(a)*16+4;add(new THREE.BoxGeometry(3,1.1,1.4),x,.55,z,0x16264a).rotation.y=-a;add(new THREE.BoxGeometry(2.6,.08,1),x,1.15,z,0x38d4ff,{emissive:0x38d4ff}).rotation.y=-a}}
+if(pr==='dock'){ship(0,5.1,-13,1.5,0);const lp=add(new THREE.RingGeometry(9,10,48),0,.03,-13,0xff9d3c,{emissive:0xff9d3c,side:2});lp.rotation.x=-Math.PI/2;for(let s=-1;s<=1;s+=2){add(new THREE.BoxGeometry(1,16,1),s*13,8,-13,0x555a6a);for(let h=2;h<16;h+=4)add(new THREE.BoxGeometry(5,.4,.4),s*10.5,h,-13,0x777c8a)}add(new THREE.BoxGeometry(26,1,1),0,16,-13,0x555a6a);for(let i=0;i<8;i++)add(new THREE.BoxGeometry(1.8,1.8,1.8),-22+(i%4)*2,.9+(i>3?1.8:0),-20,i%2?0xcc6622:0x2f6f8f)}
+if(pr==='sta')ship(18,6,-16,.9,-.6);if(k==='atrium')academyExt();if(pr!=='rock'&&pr!=='sta'){rocket(-40,-6,1.4,0xe8eef8,0xd03a3a);rocket(40,-8,1.2,0xe8eef8,0x2e5aa8);rocket(-26,-44,1.8,0xf4e6c8,0xff9d3c);rocket(34,-40,1,0xffffff,0x555a6a,1);factBoard(-24,-20,.7);factBoard(24,-20,-.7);const sg=label(LOC[k].toUpperCase(),14);sg.position.set(0,15,-32);W.add(sg)}if(pr==='rock')ship(19,2.7,-4,.8,-.7);
+if(pr=="earth"){const e=add(new THREE.SphereGeometry(4,32,32),0,6,-6,0xffffff,{map:T('#2a6cff',0,'#2e8b4a'),emissive:0x0a2a66});const w=add(new THREE.SphereGeometry(4.1,16,12),0,6,-6,0x38d4ff,{wireframe:true});ups.push(t=>{e.rotation.y=w.rotation.y=t*.3})}
+if(pr=="dna"){for(let i=0;i<40;i++){const a=i*.45,y=i*.3;add(new THREE.SphereGeometry(.28,10,10),Math.cos(a)*1.6,y,-8+Math.sin(a)*1.6,0xff5577);add(new THREE.SphereGeometry(.28,10,10),-Math.cos(a)*1.6,y,-8-Math.sin(a)*1.6,0x55aaff);if(i%2==0){const r=add(new THREE.CylinderGeometry(.06,.06,3.2,6),0,y,-8,0xffee55);r.rotation.z=Math.PI/2;r.rotation.y=-a}}}
+if(pr=="mol"){[[0,3,-8,0xff3333,1.1],[-1.6,2,-8,0xffffff,.6],[1.6,2,-8,0xffffff,.6],[6,3,-8,0x333333,1],[4.5,3,-8,0xff3333,.9],[7.5,3,-8,0xff3333,.9]].forEach(a=>add(new THREE.SphereGeometry(a[4],20,20),a[0],a[1],a[2],a[3]))}
+if(pr=="pend"){add(new THREE.BoxGeometry(8,.4,.4),0,10,-8,0x888899);const pv=new THREE.Group();pv.position.set(0,10,-8);const rod=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,7),sm(0xcccccc));rod.position.y=-3.5;const bob=new THREE.Mesh(new THREE.SphereGeometry(.8,16,16),sm(0xff9d3c));bob.position.y=-7;pv.add(rod,bob);W.add(pv);ups.push(t=>pv.rotation.z=Math.sin(t*1.5)*.7)}
+if(pr=="solar"){add(new THREE.SphereGeometry(2.5,24,24),0,6,-8,0xffcc33,{emissive:0xffaa00});const cs=[0xaaaaaa,0xe8c070,0x2a6cff,0xcc4422,0xd8a070,0xe8d090,0x88ddee,0x3355ff];cs.forEach((c,i)=>{const pg=new THREE.Group();pg.position.set(0,6,-8);const p=new THREE.Mesh(new THREE.SphereGeometry(.4+(i>3?.5:0),32,32),pm(c,i));p.position.x=4+i*2.1;if(i==5){const rg=new THREE.Mesh(new THREE.RingGeometry(1.1,1.9,48),new THREE.MeshBasicMaterial({color:0xd8c090,side:2,transparent:true,opacity:.7}));rg.rotation.x=1.3;p.add(rg)}pg.add(p);W.add(pg);ups.push(t=>pg.rotation.y=t*(.8-i*.08))})}
+if(pr=="rock"){for(let i=0;i<30;i++){const a=Math.random()*6.28,r=6+Math.random()*22;add(new THREE.DodecahedronGeometry(.6+Math.random()*1.6),Math.cos(a)*r,.4,Math.sin(a)*r,new THREE.Color(fl).multiplyScalar(.55+Math.random()*.5),{flatShading:true}).scale.y=.7}const sb={moon:['#2a6cff',0,'#2e8b4a'],mars:['#c8a070',0],europa:['#d8a070',1],titan:['#e8d090',1],exo:['#ffaa55',0,'#ff5533']}[k];const sk=add(new THREE.SphereGeometry(16,40,40),-35,30,-100,0xffffff,{map:T(sb[0],sb[1],sb[2]),emissive:0x222222});sk.material.fog=false;sk.castShadow=false;
+const cr=add(new THREE.TorusGeometry(5,1,8,24),0,.3,-10,fl);cr.rotation.x=Math.PI/2;
+if(k=="exo")for(let i=0;i<8;i++)add(new THREE.ConeGeometry(.7,4+i%3*2,5),-12+i*3.5,2,-14,0xff66ff,{emissive:0xaa22cc,emissiveIntensity:.7});
+if(k=="titan"||k=="europa"){const l=add(new THREE.CylinderGeometry(6,6,.1,32),12,.05,-8,k=="titan"?0xff8a1a:0x3a8ac8,{emissive:k=="titan"?0x552200:0x0a2a44})}}
+if(pr=="sta"){add(new THREE.BoxGeometry(4,2,10),0,3,-10,0xcccccc);for(let s=-1;s<=1;s+=2)add(new THREE.BoxGeometry(10,.1,3.5),s*8,3,-10,0x1a3aff,{emissive:0x0a1a66});add(new THREE.SphereGeometry(1.1,16,16),-14,4,-20,0xffcc44,{emissive:0x553300});const pl=add(new THREE.SphereGeometry(18,32,32),-5,-22,-50,0xffffff,{map:T(k=='deep'?'#8a4acc':'#2a6cff',1),emissive:0x0a1a44});ups.push(t=>pl.rotation.y=t*.05)}}
+const TS=22;function pos(i,n){const a=-1.9+i*(3.8/Math.max(n-1,1)),r=9+(i%2)*7;return new THREE.Vector3(Math.sin(a)*r*1.1,0,-Math.cos(a)*r+8)}
+function mkBeacon(){if(bc)S.remove(bc);const g=new THREE.Group();g.add(new THREE.Mesh(new THREE.ConeGeometry(.5,1.1,4),new THREE.MeshBasicMaterial({color:0xff9d3c})));const r=new THREE.Mesh(new THREE.TorusGeometry(1.2,.12,8,24),new THREE.MeshBasicMaterial({color:0x38d4ff}));r.rotation.x=Math.PI/2;r.position.y=.2;g.add(r);g.children[0].position.y=4.6;g.children[0].rotation.x=Math.PI;const bl=new THREE.PointLight(0xff9d3c,2,16);bl.position.y=2;g.add(bl);bc=g;S.add(g)}
+const chN=i=>i<2?"CHAPTER 01 — THE ARRIVAL":i<10?"CHAPTER 02 — SCIENCE DIVISION":i<13?"CHAPTER 03 — COSMIC EXPLORATION":i<17?"CHAPTER 04 — EXPLORATION PROGRAM":i<20?"CHAPTER 05 — EXTRAVEHICULAR ACTIVITY":"CHAPTER 06 — PROJECT NOVA";
+function rank(){return xp<1000?"Cadet":xp<4000?"Junior Researcher":xp<8000?"Mission Specialist":"Expedition Leader"}
+function hud(){const m=M[mi];academySave();$("ch").textContent=chN(mi);$("mt").textContent=(mi+1)+". "+m[1];$("ol").innerHTML=m[4].map((o,i)=>`<li class="${i<oi?"d":i==oi?"c":""}">${i<oi?"✔":i==oi?"➤":"○"} ${o}</li>`).join("");$("xv").textContent=xp;$("rk").textContent=rank();try{0}catch(e){}}
+function say(t,w,btns){$("dw").textContent=w.toUpperCase();$("dt").textContent=t;const b=$("db");b.innerHTML="";btns.forEach(x=>{const e=document.createElement("button");e.textContent=x[0];if(x[2])e.className="s";e.onclick=()=>{$("dlg").style.display="none";x[1]&&x[1]()};b.appendChild(e)});$("dlg").style.display="block";busy=true}
+function tip(t){const e=$("tip");e.textContent=t;e.style.display="block";clearTimeout(tip.t);tip.t=setTimeout(()=>e.style.display="none",2600)}
+function start(i){campusMode=false;roomMode=false;activeRoom=null;mi=i;oi=0;const m=M[i];build(m[0]);P.position.set(0,0,22);mood=1+Math.floor(mi/5)*.06;spawnCast();spawnMachines();mkBeacon();hud();tip('📍 '+LOC[m[0]]);const gos=()=>say(m[3]+(RX[mi]?RX[mi]():''),m[2],[['Begin mission',()=>{if(!choose(0)){busy=false;place()}}]]);if(PRE[mi]&&!F['q'+mi]){F['q'+mi]=1;cine(PRE[mi],gos)}else gos()}
+function place(){const v=pos(oi,M[mi][4].length);bc.position.copy(v)}
+function act(){if(busy)return;if(campusMode){academyInteract();return}if(!bc)return;if(bc.position.distanceTo(P.position)>3.5){const n=nearNPC();if(n)talk(n);return}const m=M[mi],q=m[6];busy=true;
+P.rotation.y=Math.atan2(bc.position.x-P.position.x,bc.position.z-P.position.z);beep(520);play(specFor(),()=>{WK=0;if(oi==m[4].length-1&&q){quiz(q)}else adv()})}
+function adv(){beep(880);const m=M[mi];academySave();tip("✔ "+m[4][oi]);oi++;if(oi>=m[4].length)return fin();if(!choose(oi)){busy=false;place();hud()}}
+function quiz(q){$("dw").textContent="AGENT ORION — KNOWLEDGE CHECK";$("dt").textContent=q[0];const b=$("db");b.innerHTML="";q[1].forEach((o,i)=>{const e=document.createElement("button");e.className="s";e.textContent=o;e.onclick=()=>{if(i==q[2]){$("dlg").style.display="none";if(!F['z'+mi]){F['z'+mi]=1;xp+=50}adv()}else{e.style.opacity=.3;e.disabled=true;tip("Not quite — try again")}};b.appendChild(e)});$("dlg").style.display="block"}
+function fin(){academySave();if(POST[mi]&&!F['p'+mi]){F['p'+mi]=1;bc.visible=false;return cine(POST[mi],fin)}const m=M[mi];if(!F['r'+mi]){F['r'+mi]=1;xp+=m[5]}hud();bc.visible=false;$('ar').style.display='none';
+if(mi==M.length-1)return say(ending()+" MISSION COMPLETE. +"+m[5]+" XP. Orion: “Cadet, we have reached the destination. All previous academy training has prepared you for this moment.” Commander Vega: “Today, you are no longer a student. You are an explorer.” — THE FIRST EXPEDITION is complete. Final rank: "+rank()+" ("+xp+" XP). Then, quieter, as crystal light flickers across the Commander’s face, Vega adds: “The universe was never silent, Cadet. We only just learned to listen... and tonight, something out there noticed.”",
+"Project Nova",[["Play again",()=>{xp=0;F={c:0,b:0};start(0)}]]);
+say("Mission complete! +"+m[5]+" XP earned. Orion: “Simulation successful. Well done, Cadet.” 💡 "+FACT[mi],"Agent Orion",[["Next mission ▶",()=>start(mi+1)]])}
+function go(g,c){G=g;let sv=null;if(c){try{sv=JSON.parse(localStorage.getItem("novaris"))}catch(e){}}if(sv&&sv.academyCompleted)academyCompleted=sv.academyCompleted;$("ov").style.display="none";mkPlayer();if(!orion){orion=mkOrion();S.add(orion)}startMusic();F=sv&&sv.F?sv.F:{c:0,b:0};xp=sv?sv.xp:0;window.disc={};start(sv?Math.min(sv.mi,M.length-1):0);if(sv){Object.assign(window.disc,sv.disc||{});const L=M[mi][4].length;oi=Math.max(0,Math.min(sv.oi||0,L-1));if(oi>0&&sv.px!=null){P.position.x=sv.px;P.position.z=sv.pz}place();hud()}R.domElement.focus()}
+try{const s=JSON.parse(localStorage.getItem("novaris"));if(s&&(s.mi>0||s.xp>0||s.academyCompleted&&Object.keys(s.academyCompleted).length)){G=s.G||"m";$("cont").style.display="inline-block"}}catch(e){}
+addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=1;if(CS&&(e.key===' '||e.key==='Enter')){nextShot();return}if(e.key.toLowerCase()=='e')act();if(e.key.toLowerCase()=='h'&&!busy&&bc)say('Objective: '+M[mi][4][oi]+'. Follow the arrow to the orange beacon, then press E. Press E near people to talk to them.','Agent Orion',[['Thanks',()=>busy=false]])});addEventListener("keyup",e=>keys[e.key.toLowerCase()]=0);
+/* ===== PREMIUM VIRTUAL JOYSTICK + SMOOTH MOVEMENT ===== */
+let joyActive=false,joyVec={x:0,y:0},playerVel={x:0,z:0},joyMax=48,joyDead=8;
+const joyBase=$('joyBase'),joyThumb=$('joyThumb');
+function setJoyThumb(dx,dy){joyThumb.style.transform=`translate(${dx}px,${dy}px)`}
+function joyStart(e){
+  if(e.target.closest('button,#pr,#dlg,#gm,#ov,#mb'))return;
+  const t=e.changedTouches?e.changedTouches[0]:e;
+  const r=joyBase.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  // If touch starts near the joystick area (or always for mobile), activate
+  const dist=Math.hypot(t.clientX-cx,t.clientY-cy);
+  if(dist<180||e.pointerType==='touch'){
+    joyActive=true;joyBase.classList.add('active');
+    joyMove(e);e.preventDefault();
+  }
+}
+function joyMove(e){
+  if(!joyActive)return;
+  const t=e.changedTouches?e.changedTouches[0]:e;
+  const r=joyBase.getBoundingClientRect();
+  let dx=t.clientX-(r.left+r.width/2),dy=t.clientY-(r.top+r.height/2);
+  const mag=Math.hypot(dx,dy);
+  if(mag>joyMax){dx=dx/mag*joyMax;dy=dy/mag*joyMax}
+  setJoyThumb(dx,dy);
+  const nx=mag>joyDead?dx/joyMax:0,ny=mag>joyDead?dy/joyMax:0;
+  joyVec.x=nx;joyVec.y=ny;
+}
+function joyEnd(){joyActive=false;joyBase.classList.remove('active');joyVec.x=0;joyVec.y=0;setJoyThumb(0,0)}
+joyBase.addEventListener('pointerdown',e=>{joyBase.setPointerCapture(e.pointerId);joyStart(e)});
+joyBase.addEventListener('pointermove',joyMove);
+joyBase.addEventListener('pointerup',joyEnd);joyBase.addEventListener('pointercancel',joyEnd);
+// Fallback drag anywhere for older touch path (kept light)
+let jo=null;
+addEventListener("pointerdown",e=>{if(e.pointerType=="touch"&&e.clientY<innerHeight-160&&!e.target.closest("button,#pr,#joyBase,#dlg,#gm,#se,#hud,#setp,#sePill")&&!joyActive){jo={x:e.clientX,y:e.clientY,dx:0,dy:0}}});
+addEventListener("pointermove",e=>{if(jo){jo.dx=Math.max(-1,Math.min(1,(e.clientX-jo.x)/70));jo.dy=Math.max(-1,Math.min(1,(e.clientY-jo.y)/70))}});
+addEventListener("pointerup",()=>{jo=null});
+function rs(){R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()}addEventListener("resize",rs);rs();
+build('atrium');
+
+/* ===== NOVARIS ACADEMY EXPANSION: CAMPUS + FACULTY + LABS ===== */
+let campusMode=false, roomMode=false, campusTargets=[], roomTargets=[], activeRoom=null;
+let academyCompleted={};try{academyCompleted=JSON.parse(localStorage.getItem('novaris_academy_done')||'{}')||{}}catch(e){academyCompleted={}}
+const FACULTY=[
+ {name:'Dr. Elena Voss',title:'Head of Biology',dept:'Biology',room:'BIOLOGY-101',color:0x39a88b,about:'Cell biology, molecular biology, microbiology, physiology and evolution.',line:'Welcome, Cadet. A good biologist observes carefully before drawing conclusions.'},
+ {name:'Dr. Adrian Vale',title:'Head of Chemistry',dept:'Chemistry',room:'CHEMISTRY-201',color:0x8056c9,about:'Organic and inorganic chemistry, biochemistry, bonding and reaction kinetics.',line:'Chemistry is the language of matter. Let us see what you can build with it.'},
+ {name:'Professor Marcus Reed',title:'Physics Faculty',dept:'Physics',room:'PHYSICS-301',color:0x397eb9,about:'Mechanics, thermodynamics, electromagnetism, optics and modern physics.',line:'A model is useful when it helps us predict what happens next.'},
+ {name:'Dr. Lyra Sen',title:'Astrobiology Faculty',dept:'Astrobiology',room:'ASTROBIO-401',color:0x9b69c9,about:'Extremophiles, habitability, exoplanets and origins of life.',line:'Habitability is a hypothesis to investigate, not a discovery to announce.'},
+ {name:'Commander James Arden',title:'Aerospace Instructor',dept:'Aerospace',room:'AERO-501',color:0xb34c54,about:'Rocket science, orbital mechanics, spacecraft design and propulsion concepts.',line:'Every mission begins with a checklist and a clear understanding of the limits.'},
+ {name:'Dr. Maya Chen',title:'Space Medicine Faculty',dept:'Space Medicine',room:'MED-601',color:0x3b9aab,about:'Human physiology, cardiovascular adaptation, bone health and spaceflight medicine.',line:'The human body adapts, but good mission planning respects its needs.'},
+ {name:'Dr. Noah Sterling',title:'Genetics Faculty',dept:'Genetics & Biotechnology',room:'GENE-701',color:0x8d9d4d,about:'DNA, RNA, genetics, biotechnology and molecular techniques.',line:'Information in DNA is read through a carefully regulated molecular process.'},
+ {name:'Professor Aria Wells',title:'Planetary Geology Faculty',dept:'Planetary Geology',room:'GEO-801',color:0xb77a45,about:'Minerals, planetary surfaces, geological formations and meteorites.',line:'A planet keeps a record of its history in its rocks.'}
+];
+const CAMPUS_BUILDINGS=[
+ {id:'central',name:'CENTRAL ACADEMY',sub:'Reception · Library · Administration',x:0,z:-20,w:28,d:18,h:10,room:'Central Atrium'},
+ {id:'biology',name:'BIOLOGY WING',sub:'BIOLOGY-101 · Microscopy',x:-34,z:-5,w:18,d:15,h:8,room:'Biology Laboratory'},
+ {id:'chemistry',name:'CHEMISTRY WING',sub:'CHEMISTRY-201 · Molecular Science',x:34,z:-5,w:18,d:15,h:8,room:'Chemistry Laboratory'},
+ {id:'physics',name:'PHYSICS INSTITUTE',sub:'PHYSICS-301 · Experimental Hall',x:-34,z:25,w:18,d:15,h:8,room:'Physics Laboratory'},
+ {id:'astro',name:'ASTROBIOLOGY CENTRE',sub:'Planetary Science · Genetics',x:34,z:25,w:18,d:15,h:8,room:'Astrobiology Laboratory'},
+ {id:'training',name:'ASTRONAUT TRAINING',sub:'EVA · Flight Simulation · Rover Lab',x:0,z:45,w:25,d:16,h:9,room:'Astronaut Training Centre'},
+ {id:'planetarium',name:'NEXUS PLANETARIUM',sub:'Observatory · Deep Space Theatre',x:0,z:-52,w:22,d:15,h:12,room:'Planetarium'},
+ {id:'genetics',name:'GENETICS & BIOTECH',sub:'DNA · Cell Culture · Molecular Research',x:-65,z:-5,w:17,d:14,h:8,room:'Genetics and Biotechnology Laboratory'},
+ {id:'medicine',name:'SPACE MEDICINE',sub:'Human Physiology · Crew Health',x:65,z:-5,w:17,d:14,h:8,room:'Space Medicine Centre'},
+ {id:'robotics',name:'ROBOTICS & AEROSPACE',sub:'Autonomous Systems · Engineering',x:-65,z:25,w:17,d:14,h:8,room:'Robotics and Aerospace Laboratory'},
+ {id:'geology',name:'PLANETARY GEOLOGY',sub:'Minerals · Meteorites · Surface Science',x:65,z:25,w:17,d:14,h:8,room:'Planetary Geology Laboratory'}
+];
+function academyMat(c,metal=.35,rough=.48,extra={}){return new THREE.MeshStandardMaterial(Object.assign({color:c,metalness:metal,roughness:rough},extra))}
+function academyBox(parent,x,y,z,w,h,d,mat){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+function academyLabel(text,x,y,z,w=10){const s=label(text,w);s.position.set(x,y,z);W.add(s);return s}
+function academySave(){
+ try{localStorage.setItem('novaris_academy_done',JSON.stringify(academyCompleted));
+ localStorage.setItem('novaris',JSON.stringify({v:2,G,mi,oi,xp,F,academyCompleted,roomMode,campusMode,disc:window.disc||{},px:P.position.x,pz:P.position.z}));}catch(e){}
+}
+function campusButton(){
+ if($('campusBtn'))return;
+ const b=document.createElement('button');b.id='campusBtn';b.className='s';b.textContent='🏛 CAMPUS';b.style.cssText='position:fixed;right:10px;top:calc(132px + env(safe-area-inset-top,0px));z-index:5;margin:0;background:rgba(10,20,45,.9);color:#e8f1ff;border:1px solid #38d4ff';
+ b.onclick=()=>{if($('ov').style.display==='none')enterCampus()};document.body.appendChild(b);
+}
+function enterCampus(){
+ campusMode=true;roomMode=false;activeRoom=null;busy=false;
+ buildCampusWorld();$('hud').style.display='block';$('ch').textContent='ASTRA NEXUS INTERPLANETARY ACADEMY';$('mt').textContent='Open Campus · Free Exploration';
+ $('ol').innerHTML='<li class="c">➤ Explore buildings and approach a glowing entrance</li><li>○ Meet faculty and cadets</li><li>○ Complete laboratory activities</li><li>○ Visit the planetarium and training centre</li>';
+ $('pr').style.display='none';$('ar').style.display='none';tip('CAMPUS OPEN · WASD / ARROWS · E TO ENTER OR INTERACT');academySave();
+}
+function buildCampusWorld(){
+ campusTargets=[];W.clear();ups=[];npcs.forEach(n=>S.remove(n));npcs=[];MC=[];if(bc){S.remove(bc);bc=null}
+ S.background=new THREE.Color(0x071326);S.fog=new THREE.Fog(0x071326,65,180);
+ const floor=academyMat(0x172b43,.55,.35),dark=academyMat(0x09172a,.4,.3),glass=academyMat(0x3abce0,.65,.12,{transparent:true,opacity:.34,emissive:0x062a45}),glow=academyMat(0x36d7ff,.4,.2,{emissive:0x1689bb,emissiveIntensity:1.3});
+ academyBox(W,0,-.5,0,170,1,150,floor);
+ const grid=new THREE.GridHelper(160,40,0x24769b,0x183652);grid.position.y=.02;W.add(grid);
+ for(let i=-3;i<=3;i++){academyBox(W,i*23,.12,0,.35,.2,130,glow);academyBox(W,0,.12,i*20,160,.2,.35,glow)}
+ // Main central plaza and walkways
+ academyBox(W,0,.05,0,18,.15,100,academyMat(0x253d58,.25,.5));
+ // Buildings with individually styled façades
+ CAMPUS_BUILDINGS.forEach((b,i)=>{
+   const g=new THREE.Group();g.position.set(b.x,0,b.z);W.add(g);
+   const base=academyMat([0x142b49,0x102e32,0x2a1d43,0x142b3c,0x302536,0x152b3a,0x172b50][i],.62,.32);
+   academyBox(g,0,b.h/2,0,b.w,b.h,b.d,base);
+   academyBox(g,0,b.h+.35,0,b.w+1,.55,b.d+1,glow);
+   // illuminated window bands and vertical ribs
+   for(let yy=1.5;yy<b.h-1;yy+=2.1){
+     academyBox(g,0,yy,b.d/2+.015,b.w-2,.85,.08,glass);
+     for(let xx=-b.w/2+1.4;xx<b.w/2;xx+=3.2)academyBox(g,xx,yy,b.d/2+.08,.12,.95,.12,glow);
+   }
+   for(let xx=-b.w/2+1;xx<=b.w/2;xx+=4)academyBox(g,xx,b.h/2,b.d/2+.15,.22,b.h,.3,glow);
+   academyBox(g,0,1.65,b.d/2+.2,3.2,3.3,.5,academyMat(0x071a2c,.7,.2,{emissive:0x062c44}));
+   academyBox(g,0,3.4,b.d/2+.48,4.4,.18,.16,glow);
+   const ring=new THREE.Mesh(new THREE.TorusGeometry(2.4,.09,8,32),glow);ring.position.set(0,2.5,b.d/2+.55);g.add(ring);
+   const sign=label(b.name,Math.min(13,b.w*.8));sign.position.set(0,b.h+2,b.d/2+.8);g.add(sign);
+   const sub=label(b.sub,Math.min(11,b.w*.75));sub.position.set(0,b.h-1,b.d/2+.9);g.add(sub);
+   const portal=new THREE.Mesh(new THREE.TorusGeometry(2.0,.12,10,32),new THREE.MeshBasicMaterial({color:0xffa34b}));portal.position.set(b.x,2.3,b.z+b.d/2+1.5);W.add(portal);
+   campusTargets.push({id:b.id,name:b.room,x:b.x,z:b.z+b.d/2+3,kind:'building',data:b});
+   ups.push(t=>{ring.rotation.z=Math.sin(t+i)*.12;portal.rotation.z=t*.6});
+ });
+ // Landing pad, shuttle, gardens, observatory and antenna
+ const pad=new THREE.Mesh(new THREE.CylinderGeometry(12,12,.5,48),academyMat(0x303b50,.7,.35));pad.position.set(58,.05,-42);W.add(pad);
+ const padRing=new THREE.Mesh(new THREE.TorusGeometry(10,.25,10,48),glow);padRing.rotation.x=Math.PI/2;padRing.position.set(58,.5,-42);W.add(padRing);
+ const shuttle=new THREE.Group();shuttle.position.set(58,2,-42);W.add(shuttle);
+ academyBox(shuttle,0,0,0,3,2,12,academyMat(0xe8eef8,.7,.25));const nose=new THREE.Mesh(new THREE.ConeGeometry(1.5,4,12),academyMat(0x9bb4d0,.6,.3));nose.rotation.x=-Math.PI/2;nose.position.z=-8;shuttle.add(nose);
+ for(let x of [-1,1])academyBox(shuttle,x*4,0,1,5,.2,3,academyMat(0x2469b4,.6,.25,{emissive:0x0b2a65}));
+ const dome=new THREE.Mesh(new THREE.SphereGeometry(8,24,16,0,Math.PI*2,0,Math.PI/2),academyMat(0x234c6a,.55,.16,{transparent:true,opacity:.65,emissive:0x061b32}));dome.position.set(-58,0,-38);W.add(dome);
+ const antenna=new THREE.Group();antenna.position.set(-60,0,35);W.add(antenna);academyBox(antenna,0,7,0,.5,14,.5,glow);
+ const dish=new THREE.Mesh(new THREE.SphereGeometry(3,20,12,0,Math.PI*2,0,Math.PI/2),academyMat(0xbac8d9,.8,.25));dish.position.y=13;antenna.add(dish);
+ // Trees / garden pods
+ for(let i=0;i<32;i++){let x=(Math.sin(i*12.3))*68,z=(Math.cos(i*8.2))*58;if(Math.abs(x)<44&&Math.abs(z)<36)continue;
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.22,.35,2,8),academyMat(0x795d48));trunk.position.set(x,1,z);W.add(trunk);
+ const crown=new THREE.Mesh(new THREE.SphereGeometry(1.5,10,8),academyMat(i%2?0x267d72:0x398a79,.1,.8));crown.position.set(x,3,z);W.add(crown)}
+ // Campus lighting
+ W.add(new THREE.HemisphereLight(0xa9d9ff,0x17253b,1.0));
+ const sun=new THREE.DirectionalLight(0xffe6c1,1.5);sun.position.set(-35,55,30);sun.castShadow=true;W.add(sun);
+ const pl=new THREE.PointLight(0x38d4ff,2,80);pl.position.set(0,12,0);W.add(pl);
+ // Faculty and students
+ FACULTY.forEach((f,i)=>{const n=mkNPC(f.name,false,f.color,f.name);n.position.set(f.x??(i%2?-39:39),0,f.z??(-9+Math.floor(i/2)*14));n.userData.faculty=f;n.userData.campusPerson=true;S.add(n);npcs.push(n)});
+ const students=[['Asha Patel',0x8056c9],['Leo Bennett',0x258f83],['Mira Okafor',0xc26b48],['Dax Morgan',0x3977bc],['Ishan Rao',0xb49a42],['Zara Khan',0xa64f83],['Theo Park',0x5e9aaf],['Nia Brooks',0x9a8050]];
+ students.forEach((v,i)=>{const n=mkNPC('Cadet',false,v[1],v[0]);n.position.set(-18+(i%4)*12,0,12+Math.floor(i/4)*10);n.userData.name=v[0];n.userData.wander=true;n.userData.tx=n.position.x+(Math.random()-.5)*12;n.userData.tz=n.position.z+(Math.random()-.5)*12;n.userData.campusPerson=true;S.add(n);npcs.push(n)});
+ P.position.set(0,0,18);P.rotation.y=Math.PI;
+}
+function enterAcademyRoom(id){
+ const b=CAMPUS_BUILDINGS.find(x=>x.id===id);if(!b)return;
+ roomMode=true;activeRoom=b;W.clear();ups=[];npcs.forEach(n=>S.remove(n));npcs=[];
+ S.background=new THREE.Color(0x071321);S.fog=new THREE.Fog(0x071321,35,90);
+ const wall=academyMat(0x14243a,.45,.4),floor=academyMat(0x202f43,.45,.4),trim=academyMat(0x38c9ec,.5,.25,{emissive:0x0b4d66});
+ academyBox(W,0,-.35,0,48,.7,42,floor);
+ academyBox(W,0,6,-21,48,12,.7,wall);academyBox(W,-24,6,0,.7,12,42,wall);academyBox(W,24,6,0,.7,12,42,wall);academyBox(W,0,6,21,48,12,.7,wall);
+ academyBox(W,0,11.8,0,48,.4,42,wall);
+ for(let x=-20;x<=20;x+=4){academyBox(W,x,.08,-20,.14,.12,40,trim);academyBox(W,x,11.7,-20,.14,.12,40,trim)}
+ for(let z=-16;z<=16;z+=4)academyBox(W,-23.8,.08,z,47,.12,.14,trim);
+ // overhead luminaires
+ for(let x=-15;x<=15;x+=10){const light=new THREE.PointLight(0x75dfff,1.4,24);light.position.set(x,9,0);W.add(light);academyBox(W,x,11,0,4,.16,1,trim)}
+ academyLabel(activeRoom.room.toUpperCase(),0,9.5,-20,16);
+ // desks, cabinets and equipment unique to each wing
+ const isBio=id==='biology'||id==='genetics',isChem=id==='chemistry',isPhys=id==='physics',isAstro=id==='astro'||id==='geology',isTrain=id==='training'||id==='robotics',isPlanet=id==='planetarium';
+ for(let i=0;i<4;i++){
+   const x=-15+(i%2)*30,z=-10+Math.floor(i/2)*20;
+   academyBox(W,x,1.2,z,8,1,3,academyMat(isBio?0x28564f:isChem?0x44305c:isPhys?0x294b68:0x34445c,.6,.3));
+   academyBox(W,x,2,z-1,5,1.2,.15,academyMat(0x0a1728,.5,.2,{emissive:0x063c55}));
+   for(let j=0;j<3;j++){const tube=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,1.5,8),academyMat(isBio?0x66d9a4:isChem?0x9d7bff:0x6acfff,.5,.25,{emissive:0x143b55}));tube.position.set(x-2+j*2,3,z);W.add(tube)}
+ }
+ // room-specific signature model
+ if(isBio){
+   // cell organelle display and DNA helix
+   const cell=new THREE.Group();cell.position.set(0,3,-5);W.add(cell);
+   const membrane=new THREE.Mesh(new THREE.SphereGeometry(3.4,32,24),academyMat(0x4bd7bb,.25,.2,{transparent:true,opacity:.23,side:2}));cell.add(membrane);
+   const nuc=new THREE.Mesh(new THREE.SphereGeometry(1.05,24,16),academyMat(0x8d70db,.25,.25,{emissive:0x32205f}));cell.add(nuc);
+   for(let i=0;i<7;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(.35,12,8),academyMat(0xffa45d));m.position.set(Math.sin(i*2.4)*2,Math.cos(i*3.2)*1.5,Math.cos(i*1.8)*2);cell.add(m)}
+   ups.push(t=>cell.rotation.y=t*.18);
+   for(let i=0;i<30;i++){const a=i*.52,y=-4+i*.27;const a1=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),academyMat(0xff6688)),a2=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),academyMat(0x55bbff));a1.position.set(Math.cos(a)*1.5,y,10+Math.sin(a)*1.5);a2.position.set(-Math.cos(a)*1.5,y,10-Math.sin(a)*1.5);W.add(a1,a2)}
+ }else if(isChem){
+   const table=new THREE.Group();table.position.set(0,4,-4);W.add(table);
+   const colors=[0xffffff,0xe34d55,0x2d8ee8,0xe5c34b,0x9b69c9];const pts=[[0,0,0],[-2,0,0],[2,0,0],[0,1.8,0],[0,-1.8,0]];
+   pts.forEach((p,i)=>{const a=new THREE.Mesh(new THREE.SphereGeometry(.8,20,14),academyMat(colors[i],.35,.2,{emissive:colors[i],emissiveIntensity:.18}));a.position.set(...p);table.add(a)});
+   ups.push(t=>table.rotation.y=t*.4);
+ }else if(isPhys){
+   const pivot=new THREE.Group();pivot.position.set(0,8,-5);W.add(pivot);const rod=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,6,10),academyMat(0xcbd5e1));rod.position.y=-3;pivot.add(rod);const bob=new THREE.Mesh(new THREE.SphereGeometry(.7,20,12),academyMat(0xffa34b,.5,.25,{emissive:0x713d13}));bob.position.y=-6;pivot.add(bob);ups.push(t=>pivot.rotation.z=Math.sin(t*1.3)*.6);
+ }else if(isAstro){
+   const planet=new THREE.Mesh(new THREE.SphereGeometry(3,32,24),academyMat(0x8d6dba,.2,.65));planet.position.set(0,4,-5);W.add(planet);const atm=new THREE.Mesh(new THREE.SphereGeometry(3.3,32,24),academyMat(0x52d8ff,.2,.15,{transparent:true,opacity:.18,emissive:0x124466}));atm.position.copy(planet.position);W.add(atm);ups.push(t=>planet.rotation.y=t*.2);
+ }else if(isPlanet){
+   const sun=new THREE.Mesh(new THREE.SphereGeometry(2,24,16),academyMat(0xffc65a,.2,.3,{emissive:0xff8a22,emissiveIntensity:1.5}));sun.position.set(0,5,-5);W.add(sun);
+   for(let i=0;i<8;i++){const orb=new THREE.Group();orb.position.copy(sun.position);const p=new THREE.Mesh(new THREE.SphereGeometry(.35+i*.07,16,12),academyMat([0x9a9a9a,0xc8a56a,0x2777d8,0xb34e36,0xd1a16a,0xd9c48e,0x73c8d7,0x4256b7][i]));p.position.x=4+i*1.7;orb.add(p);W.add(orb);ups.push(t=>orb.rotation.y=t*(.8-i*.06))}
+ }else if(isTrain){
+   academyBox(W,0,4,-5,12,7,1,academyMat(0x233a59,.6,.25,{emissive:0x0a2540}));const cockpit=academyBox(W,0,3,8,8,5,5,academyMat(0x34465d,.6,.25));academyBox(W,0,5.6,5.4,6,1,.2,trim);
+ }
+ // exits and interaction stations
+ roomTargets=[{id:'exit',name:'Return to Campus',x:0,z:17,kind:'exit'}];
+ const stations=isBio?[
+  ['cell','3D CELL EXPLORER',-13,-7],['microscope','VIRTUAL MICROSCOPE',13,-7],['dna','DNA ARCHIVE',-13,9],['physiology','HUMAN PHYSIOLOGY',13,9]
+ ]:isChem?[
+  ['periodic','INTERACTIVE PERIODIC TABLE',-13,-7],['molecule','MOLECULAR BUILDER',13,-7],['reaction','REACTION SIMULATOR',-13,9],['spectra','SPECTROSCOPY',13,9]
+ ]:isPhys?[
+  ['pendulum','PENDULUM LAB',-13,-7],['optics','OPTICS BENCH',13,-7],['motion','MOTION SIMULATOR',-13,9],['waves','WAVE LAB',13,9]
+ ]:isAstro?[
+  ['habitability','PLANET HABITABILITY',-13,-7],['sample','SAMPLE ANALYSIS',13,-7],['genetics','GENE EXPRESSION',-13,9],['mission','RESEARCH BRIEFING',13,9]
+ ]:isTrain?[
+  ['cockpit','FLIGHT SIMULATOR',-13,-7],['eva','EVA CHECKLIST',13,-7],['rover','ROVER SIMULATOR',-13,9],['fitness','CREW READINESS',13,9]
+ ]:isPlanet?[
+  ['solar','SOLAR SYSTEM',-13,-7],['stars','CONSTELLATION ARCHIVE',13,-7],['exoplanet','EXOPLANET SCANNER',-13,9],['observatory','OBSERVATORY LOG',13,9]
+ ]:[
+  ['library','DIGITAL LIBRARY',-13,-7],['records','STUDENT REGISTRY',13,-7],['faculty','FACULTY DIRECTORY',-13,9],['timetable','ACADEMY TIMETABLE',13,9]
+ ];
+ stations.forEach(([id,name,x,z])=>{
+   const desk=academyBox(W,x,1,z,5,1.1,3,academyMat(0x1c3651,.6,.3));academyBox(W,x,2,z-1.1,3.8,1.5,.15,academyMat(0x082334,.4,.2,{emissive:0x07506a}));
+   const orb=new THREE.Mesh(new THREE.TorusGeometry(1.1,.08,8,24),new THREE.MeshBasicMaterial({color:0xffa34b}));orb.position.set(x,3,z);W.add(orb);
+   const s=label(name,8);s.position.set(x,4.2,z);W.add(s);roomTargets.push({id,name,x,z,kind:'station'});
+ });
+ // Faculty member in their department
+ const f=FACULTY.find(v=>v.dept==='Biology'&&isBio)||FACULTY.find(v=>v.dept==='Chemistry'&&isChem)||FACULTY.find(v=>v.dept==='Physics'&&isPhys)||FACULTY.find(v=>v.dept==='Astrobiology'&&isAstro)||FACULTY.find(v=>v.dept==='Aerospace'&&isTrain);
+ if(f){const n=mkNPC(f.name,false,f.color,f.name);n.position.set(0,0,1);n.userData.faculty=f;n.userData.campusPerson=true;S.add(n);npcs.push(n)}
+ P.position.set(0,0,14);P.rotation.y=Math.PI;
+}
+function nearestAcademyTarget(){
+ const list=roomMode?roomTargets:campusTargets;let best=null,dist=999;
+ for(const t of list){const d=Math.hypot(P.position.x-t.x,P.position.z-t.z);if(d<dist){best=t;dist=d}}
+ return dist<5?best:null;
+}
+function academyInteract(){
+ const t=nearestAcademyTarget();if(!t){const n=nearNPC();if(n){if(n.userData.faculty)facultyTalk(n.userData.faculty);else talk(n)}return}
+ if(t.kind==='building'){enterAcademyRoom(t.id);busy=false;tip('ENTERED · '+t.name);return}
+ if(t.kind==='exit'){enterCampus();return}
+ launchAcademyActivity(t.id);
+}
+function facultyTalk(f){
+ const done=Object.keys(academyCompleted).filter(k=>k.startsWith(f.dept)).length;
+ say(f.name.toUpperCase()+' · '+f.title, f.line+' '+f.about+' You have completed '+done+' activities in this department. Ask me about the laboratory stations to begin a practical.',[['Show my assignment',()=>{say('RESEARCH TASK · '+f.dept,'FACULTY ASSIGNMENT',[['Begin practical',()=>{const id=f.dept==='Biology'?'cell':f.dept==='Chemistry'?'periodic':f.dept==='Physics'?'pendulum':f.dept==='Astrobiology'?'habitability':'cockpit';launchAcademyActivity(id)}],['Later',()=>busy=false]])}],['Goodbye',()=>busy=false]]);
+}
+function academyReward(id,msg){
+ academyCompleted[id]=true;xp+=100;academySave();hud();
+ gOpen('RESEARCH LOG UPDATED',msg+'<p><b>+100 XP</b> · '+Object.keys(academyCompleted).length+' academy activities completed.</p>');
+ $('gc').innerHTML='<button onclick="gClose(1)">Continue</button>';GD=()=>{busy=false};
+}
+function launchAcademyActivity(id){
+ const done=!!academyCompleted[id];
+ if(id==='cell'){
+  gOpen('3D ANIMAL CELL','Select an organelle to inspect its role. This schematic is a learning model, not a scale representation.');
+  const parts=[['Nucleus','Stores most of the cell’s genetic information and helps regulate cell activity.'],['Nucleolus','A region inside the nucleus where ribosomal subunits begin to assemble.'],['Mitochondrion','Carries out much of the aerobic respiration that produces ATP.'],['Ribosome','Builds proteins by translating messenger RNA.'],['Rough ER','Helps synthesize and process proteins destined for membranes or secretion.'],['Golgi apparatus','Modifies, sorts and packages proteins and lipids.'],['Lysosome','Contains enzymes that digest and recycle cellular material.'],['Cell membrane','A selectively permeable boundary controlling exchange with the environment.'],['Cytoplasm','The material inside the cell membrane in which many reactions occur.']];
+  $('gc').innerHTML='<div class="row">'+parts.map((p,i)=>'<button class="s" data-part="'+i+'">'+p[0]+'</button>').join('')+'</div><div id="partInfo" style="padding:10px;border:1px solid #38d4ff;border-radius:8px">Choose an organelle above.</div><button id="cellDone">Submit cell investigation</button>';
+  $('gc').querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{$('partInfo').textContent=parts[+b.dataset.part][1]});
+  $('cellDone').onclick=()=>academyReward(id,'Cell investigation recorded. You identified the key structures and their functions.');return;
+ }
+ if(id==='microscope'){
+  gOpen('VIRTUAL MICROSCOPE','Adjust magnification and focus. Identify the specimen from its visible features.');
+  $('gc').innerHTML='<canvas id="microCanvas" width="520" height="230"></canvas><label>Magnification <input id="mag" type="range" min="40" max="400" value="100"></label><label>Focus <input id="focus" type="range" min="0" max="100" value="50"></label><div id="microRead">100× · Focus 50</div><div class="row"><button id="specA">Onion epidermis</button><button id="specB">Cheek epithelial cells</button><button id="specC">Pollen grain</button></div><button id="microSubmit">Record observation</button>';
+  const cv=$('microCanvas'),ctx=cv.getContext('2d');let specimen=0;const draw=()=>{const m=+$('mag').value,f=+$('focus').value;ctx.fillStyle='#07111e';ctx.fillRect(0,0,520,230);ctx.save();ctx.beginPath();ctx.arc(260,115,105,0,Math.PI*2);ctx.clip();ctx.fillStyle=specimen===0?'#355d48':specimen===1?'#6a526d':'#8b7448';ctx.fillRect(150,5,220,220);for(let i=0;i<65;i++){const x=150+(i*71%210),y=10+(i*43%210),r=Math.max(2,m/50);ctx.strokeStyle=specimen===0?'#a7db9c':'#d8c7e8';ctx.lineWidth=1.2;ctx.beginPath();if(specimen===0)ctx.rect(x,y,r*1.8,r*1.2);else{ctx.ellipse(x,y,r*1.8,r,0,0,7)}ctx.stroke();ctx.fillStyle='#9b75bd';ctx.beginPath();ctx.arc(x+r*.5,y+r*.4,Math.max(1,r*.22),0,7);ctx.fill()}ctx.restore();ctx.strokeStyle='#a9dfff';ctx.lineWidth=4;ctx.beginPath();ctx.arc(260,115,105,0,7);ctx.stroke();$('microRead').textContent=m+'× · Focus '+f+' · '+['Plant epidermal pattern','Epithelial cell pattern','Pollen morphology'][specimen]};
+  ['mag','focus'].forEach(k=>$(k).oninput=draw);['specA','specB','specC'].forEach((k,i)=>$(k).onclick=()=>{specimen=i;draw()});draw();$('microSubmit').onclick=()=>academyReward(id,'Microscope observation saved. Compare cell boundaries, nuclei and specimen morphology.');return;
+ }
+ if(id==='dna'||id==='genetics'){
+  gOpen('DNA ARCHIVE','Complete the complementary DNA strand. Base-pairing rule: A–T and C–G.');
+  const seq='ATGCCATG';$('gc').innerHTML='<p>Template: <b>'+seq+'</b></p><div id="dnaInputs" class="row">'+[...seq].map(()=>'<select style="padding:8px;background:#10233b;color:white;border:1px solid #38d4ff;border-radius:6px"><option>A</option><option>T</option><option>C</option><option>G</option></select>').join('')+'</div><button id="dnaCheck">Check complementary strand</button>';
+  $('dnaCheck').onclick=()=>{const answer=[...seq].map(x=>({A:'T',T:'A',C:'G',G:'C'}[x])).join(''),v=[...$('dnaInputs').querySelectorAll('select')].map(x=>x.value).join('');if(v===answer)academyReward(id,'Correct. You reconstructed the complementary strand.');else gMsg('Not quite. Remember A pairs with T, and C pairs with G.')};return;
+ }
+ if(id==='periodic'){
+  gOpen('INTERACTIVE PERIODIC TABLE','Select an element. Explore its position and properties.');
+  const els=[['H','Hydrogen',1,'1.008','1','1','Non-metal'],['C','Carbon',6,'12.011','14','2','Non-metal'],['N','Nitrogen',7,'14.007','15','2','Non-metal'],['O','Oxygen',8,'15.999','16','2','Non-metal'],['Na','Sodium',11,'22.990','1','3','Alkali metal'],['P','Phosphorus',15,'30.974','15','3','Non-metal'],['S','Sulfur',16,'32.06','16','3','Non-metal'],['Fe','Iron',26,'55.845','8','4','Transition metal'],['Cu','Copper',29,'63.546','11','4','Transition metal'],['He','Helium',2,'4.003','18','1','Noble gas']];
+  $('gc').innerHTML='<div class="row">'+els.map((e,i)=>'<button class="s" data-el="'+i+'" style="min-width:54px">'+e[0]+'<small> '+e[2]+'</small></button>').join('')+'</div><div id="elInfo" style="padding:10px;border:1px solid #38d4ff;border-radius:8px">Choose an element.</div><button id="elDone">Complete element study</button>';
+  $('gc').querySelectorAll('[data-el]').forEach(b=>b.onclick=()=>{const e=els[+b.dataset.el];$('elInfo').innerHTML='<b>'+e[1]+' ('+e[0]+')</b><br>Atomic number: '+e[2]+'<br>Relative atomic mass: '+e[3]+'<br>Group: '+e[4]+' · Period: '+e[5]+'<br>Classification: '+e[6]});
+  $('elDone').onclick=()=>academyReward(id,'Element study completed using the periodic table.');return;
+ }
+ if(id==='molecule'){
+  gOpen('MOLECULAR BUILDER','Choose a molecule to inspect its formula, atoms and structure.');
+  const data=[['Water','H₂O','Two hydrogen atoms covalently bonded to one oxygen atom. Bent molecular geometry.'],['Carbon dioxide','CO₂','One carbon atom and two oxygen atoms; linear molecular geometry.'],['Oxygen','O₂','Two oxygen atoms joined by a double bond in the common Lewis representation.'],['Ammonia','NH₃','One nitrogen atom bonded to three hydrogen atoms; trigonal pyramidal geometry.']];
+  $('gc').innerHTML='<div class="row">'+data.map((d,i)=>'<button class="s" data-mol="'+i+'">'+d[0]+'</button>').join('')+'</div><div id="molInfo">Select a molecule.</div><canvas id="molCanvas" width="520" height="160"></canvas><button id="molDone">Submit molecular study</button>';
+  const c=$('molCanvas').getContext('2d');$('gc').querySelectorAll('[data-mol]').forEach(b=>b.onclick=()=>{const d=data[+b.dataset.mol];$('molInfo').innerHTML='<b>'+d[0]+' · '+d[1]+'</b><br>'+d[2];c.clearRect(0,0,520,160);const atoms=d[1].replace(/[₂₃₄]/g,'').split('');const colors={H:'#f1f5ff',O:'#e75b5b',C:'#555b67',N:'#438be2'};atoms.forEach((a,i)=>{const x=260+(i-(atoms.length-1)/2)*85;c.fillStyle=colors[a]||'#fff';c.beginPath();c.arc(x,80,25,0,7);c.fill();c.fillStyle='#06111d';c.font='bold 18px sans-serif';c.fillText(a,x-6,86);if(i){c.strokeStyle='#cbd9e8';c.lineWidth=5;c.beginPath();c.moveTo(x-60,80);c.lineTo(x-25,80);c.stroke()}})});
+  $('molDone').onclick=()=>academyReward(id,'Molecular study saved. Molecular geometry and atom counts were reviewed.');return;
+ }
+ if(id==='reaction'){
+  gOpen('REACTION SIMULATOR','Select a balanced equation and inspect conservation of atoms.');
+  const eq=[['2H₂ + O₂ → 2H₂O','4 H atoms and 2 O atoms on each side.'],['CH₄ + 2O₂ → CO₂ + 2H₂O','1 C, 4 H and 4 O atoms on each side.'],['N₂ + 3H₂ → 2NH₃','2 N atoms and 6 H atoms on each side.']];
+  $('gc').innerHTML=eq.map((e,i)=>'<p><button class="s" data-eq="'+i+'">'+e[0]+'</button><span id="eq'+i+'"></span></p>').join('')+'<button id="eqDone">Record reaction analysis</button>';
+  $('gc').querySelectorAll('[data-eq]').forEach(b=>b.onclick=()=>{$('eq'+b.dataset.eq).textContent=' — '+eq[+b.dataset.eq][1]});
+  $('eqDone').onclick=()=>academyReward(id,'Reaction analysis completed. Atoms are conserved in a balanced chemical equation.');return;
+ }
+ if(id==='spectra'){
+  gOpen('VIRTUAL SPECTROSCOPY','Choose a simulated sample and inspect its characteristic absorption bands.');
+  $('gc').innerHTML='<canvas id="spCanvas" width="520" height="190"></canvas><div class="row"><button class="s" data-sp="0">Hydrogen-like sample</button><button class="s" data-sp="1">Chlorophyll-like sample</button><button class="s" data-sp="2">Unknown sample</button></div><button id="spDone">Save spectrum comparison</button>';
+  const cv=$('spCanvas'),cx=cv.getContext('2d');let si=0;const draw=()=>{cx.fillStyle='#07111e';cx.fillRect(0,0,520,190);cx.strokeStyle='#6ce4ff';cx.beginPath();for(let x=0;x<520;x++){let y=150;for(const k of (si===0?[80,220,410]:si===1?[95,130,320,380]:[110,220,320]))y-=Math.exp(-Math.pow((x-k)/5,2))*105;cx.lineTo(x,y)}cx.stroke();cx.fillStyle='#d9e9ff';cx.fillText(['Sample A · discrete bands','Sample B · multiple absorption bands','Unknown · compare with reference'][si],15,20)};$('gc').querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>{si=+b.dataset.sp;draw()});draw();$('spDone').onclick=()=>academyReward(id,'Spectral comparison saved. This simplified display is illustrative, not measured laboratory data.');return;
+ }
+ if(['pendulum','motion','optics','waves'].includes(id)){
+  gOpen('PHYSICS EXPERIMENT','Change the variable and observe the model response. These are simplified idealised simulations.');
+  $('gc').innerHTML='<label>Length / distance <input id="pv" type="range" min="1" max="100" value="50"></label><label>Gravity <input id="pgv" type="range" min="1" max="20" value="10"></label><canvas id="physCanvas" width="520" height="180"></canvas><div id="physRead"></div><button id="physDone">Record experiment</button>';
+  const cv=$('physCanvas'),cx=cv.getContext('2d');const draw=()=>{let l=+$('pv').value/10,g=+$('pgv').value/10;cx.fillStyle='#07111e';cx.fillRect(0,0,520,180);cx.strokeStyle='#38d4ff';cx.lineWidth=3;cx.beginPath();cx.moveTo(260,20);cx.lineTo(260+Math.sin(.7)*l*12,20+Math.cos(.7)*l*12);cx.stroke();cx.fillStyle='#ff9d3c';cx.beginPath();cx.arc(260+Math.sin(.7)*l*12,20+Math.cos(.7)*l*12,12,0,7);cx.fill();let period=2*Math.PI*Math.sqrt((l)/(g*9.81));$('physRead').textContent='Model length: '+l.toFixed(1)+' m · gravity: '+(g*9.81).toFixed(1)+' m/s² · ideal period: '+period.toFixed(2)+' s'};$('pv').oninput=draw;$('pgv').oninput=draw;draw();$('physDone').onclick=()=>academyReward(id,'Physics experiment recorded with variable settings and predicted response.');return;
+ }
+ if(id==='habitability'||id==='sample'||id==='mission'||id==='exoplanet'){
+  gOpen('PLANETARY HABITABILITY SIMULATOR','Evaluate a fictional planet. A potentially habitable environment is not evidence that life exists.');
+  $('gc').innerHTML='<label>Mean surface temperature <input id="temp" type="range" min="-100" max="100" value="15"></label><label>Atmospheric pressure <input id="press" type="range" min="0" max="200" value="100"></label><label>Liquid water evidence <select id="water"><option value="0">Not detected</option><option value="1">Possible</option><option value="2">Strong geological indicators</option></select></label><div id="habRead"></div><button id="habDone">Submit cautious assessment</button>';
+  const assess=()=>{const t=+$('temp').value,p=+$('press').value,w=+$('water').value;$('habRead').textContent='Model assessment: '+(t>=0&&t<=40&&p>=50&&w>0?'Some surface conditions may be compatible with liquid water. Further measurements are required.':'Current model parameters do not strongly support stable surface liquid water.')+' Temperature '+t+' °C · pressure '+p+' kPa.'};['temp','press','water'].forEach(k=>$(k).oninput=assess);assess();$('habDone').onclick=()=>academyReward(id,'Fictional planet assessment submitted. No claim of extraterrestrial life is made.');return;
+ }
+ if(id==='library'||id==='records'||id==='faculty'||id==='timetable'||id==='solar'||id==='stars'||id==='observatory'){
+  const content={
+   library:'DIGITAL LIBRARY · Biology: cell theory and organelles · Chemistry: atomic structure and bonding · Physics: motion and energy · Astronomy: stars and exoplanets · Space Medicine: human adaptation.',
+   records:'STUDENT REGISTRY · Cadet ID: NX-'+String(1000+(xp%8999)).padStart(4,'0')+' · Rank: '+rank()+' · XP: '+xp+' · Completed research activities: '+Object.keys(academyCompleted).length,
+   faculty:FACULTY.map(f=>f.name+' — '+f.title+' · '+f.dept+' · '+f.room).join('<br>'),
+   timetable:'08:00 Orientation · 09:00 Biology · 10:00 Chemistry · 11:30 Research · 13:00 Cafeteria · 14:00 Physics · 15:00 Astronaut training · 16:00 Independent study',
+   solar:'SOLAR SYSTEM ARCHIVE · Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus and Neptune orbit the Sun. Distances and orbital periods differ greatly.',
+   stars:'CONSTELLATION ARCHIVE · Star patterns are useful sky-navigation conventions; their stars may be at very different distances.',
+   observatory:'OBSERVATORY LOG · Select a target, record observing conditions and distinguish direct observations from interpretations.'
+  };
+  gOpen(timetableTitle(id),content[id]);$('gc').innerHTML='<button onclick="gClose(1)">Close archive</button>';GD=()=>{busy=false};return;
+ }
+ if(id==='cockpit'||id==='eva'||id==='rover'||id==='fitness'){
+  gOpen('ASTRONAUT TRAINING MODULE','Complete the pre-session checklist. This is a classroom simulation, not operational flight instruction.');
+  const items=['Confirm mission objective','Check simulated suit and communications status','Review environmental constraints','Confirm crew readiness'];$('gc').innerHTML=items.map((v,i)=>'<p><label><input type="checkbox" class="checkItem"> '+v+'</label></p>').join('')+'<button id="trainDone">Submit checklist</button>';
+  $('trainDone').onclick=()=>{if([...$('gc').querySelectorAll('.checkItem')].every(x=>x.checked))academyReward(id,'Training checklist completed.');else gMsg('Review every checklist item before submitting.')};return;
+ }
+ gOpen('ACADEMY TERMINAL','This station is ready for your research session.');$('gc').innerHTML='<button onclick="gClose(1)">Continue</button>';
+}
+function timetableTitle(id){return ({library:'DIGITAL LIBRARY',records:'CADET REGISTRY',faculty:'FACULTY DIRECTORY',timetable:'ACADEMY TIMETABLE',solar:'SOLAR SYSTEM ARCHIVE',stars:'CONSTELLATION ARCHIVE',observatory:'OBSERVATORY LOG'})[id]||'ACADEMY ARCHIVE'}
+function facultyInteraction(n){if(n.userData.faculty)facultyTalk(n.userData.faculty);else talk(n)}
+function academyFrame(){
+ if(!campusMode)return;
+ const target=nearestAcademyTarget(),n=nearNPC();
+ $('pr').style.display=(!busy&&(target||n))?'block':'none';
+ $('pr').textContent=target?'Press E — '+(target.kind==='building'?'Enter '+target.name:target.kind==='exit'?'Return to Campus':'Use '+target.name):n?'Press E — Talk to '+(n.userData.name||'Cadet'):'';
+}
+function academyOrionButton(){
+ if($('orionCampusBtn'))return;
+ const b=document.createElement('button');b.id='orionCampusBtn';b.className='s';b.textContent='✦ ORION';b.style.cssText='position:fixed;right:10px;top:calc(176px + env(safe-area-inset-top,0px));z-index:5;margin:0;background:rgba(10,20,45,.9);color:#e8f1ff;border:1px solid #38d4ff';
+ b.onclick=()=>{if($('ov').style.display==='none')say('ORION · ACADEMY ASSISTANT','I can guide you around campus. Biology is in the west research wing, Chemistry in the east wing, Physics in the southwest, Astrobiology in the southeast, and the Planetarium is north of the central complex. Approach a building portal and press E. In a laboratory, approach a glowing station and press E to begin a simulation. Current XP: '+xp+'. Completed practicals: '+Object.keys(academyCompleted).length+'.',[['Understood',()=>busy=false]]);};document.body.appendChild(b);
+}
+function academyMobileControls(){
+ if($('academyHelp'))return;
+ const h=document.createElement('div');h.id='academyHelp';h.style.cssText='position:fixed;right:10px;bottom:12px;z-index:4;color:#b8dfff;background:rgba(5,12,28,.72);border:1px solid rgba(56,212,255,.3);border-radius:9px;padding:7px 10px;font-size:11px;pointer-events:none';h.textContent='WASD / ARROWS · JOYSTICK · E INTERACT · H HELP';document.body.appendChild(h);
+}
+
+campusButton();academyOrionButton();academyMobileControls();
+
+/* ===== NOVARIS v2 MODULE: BOARD/HUD MANAGER · SHOW EVERYTHING · COLLISION · SAVE · NEW LABS ===== */
+window.disc=window.disc||{};
+(function(){
+const ST={mode:0,tab:'m',vol:.5,se:false,semin:false};
+try{const u=JSON.parse(localStorage.getItem('novaris_ui')||'{}');if(u.mode===0||u.mode===1)ST.mode=u.mode;if(u.tab)ST.tab=u.tab;if(typeof u.vol==='number')ST.vol=u.vol}catch(e){}
+const saveUI=()=>{try{localStorage.setItem('novaris_ui',JSON.stringify({mode:ST.mode,tab:ST.tab,vol:ST.vol}))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const ACT=[['cell','Biology','3D Animal Cell'],['microscope','Biology','Virtual Microscope'],['dna','Biology','DNA Archive'],['physiology','Biology','Human Physiology'],
+['periodic','Chemistry','Interactive Periodic Table'],['molecule','Chemistry','Molecular Builder'],['reaction','Chemistry','Reaction Simulator'],['spectra','Chemistry','Spectroscopy'],
+['pendulum','Physics','Pendulum Lab'],['optics','Physics','Optics Bench (Snell’s law)'],['motion','Physics','Projectile Motion'],['waves','Physics','Wave Lab (v = fλ)'],
+['habitability','Astrobiology','Planet Habitability'],['sample','Astrobiology','Extremophile Sample Analysis'],['genetics','Astrobiology','Gene Expression (base pairing)'],['mission','Astrobiology','Biosignature Briefing'],
+['cockpit','Aerospace','Flight Simulator Checklist'],['eva','Aerospace','EVA Checklist'],['rover','Aerospace','Rover Checklist'],['fitness','Aerospace','Crew Readiness'],
+['exoplanet','Astronomy','Exoplanet Transit Scanner']];
+const DEPT={'Biology':['cell','microscope','physiology'],'Chemistry':['periodic','molecule','reaction','spectra'],'Physics':['pendulum','optics','motion','waves'],'Astrobiology':['habitability','sample','mission'],'Aerospace':['cockpit','eva','rover'],'Space Medicine':['physiology','fitness'],'Genetics & Biotechnology':['dna','genetics'],'Planetary Geology':['sample','habitability']};
+const mDone=i=>i<mi||(i===mi&&oi>=M[i][4].length);
+const status=i=>mDone(i)?'done':i===mi?'act':'lock';
+const nDone=()=>ACT.filter(a=>academyCompleted[a[0]]).length;
+const ACH=[['First Steps','Complete mission 1',()=>mDone(0)],['Science Division','Complete mission 10 (Light and Magnetism)',()=>mDone(9)],['Cosmic Explorer','Complete mission 14 (Operation Lunar)',()=>mDone(13)],['Spacewalker','Complete mission 20 (The Lost Satellite)',()=>mDone(19)],['Project Nova','Complete the final mission',()=>mDone(24)],
+['Honest Scientist','Give the honest Europa report',()=>!!F.hon],['Rescuer','Rescue Dax on Mars',()=>!!F.dax],['True Friend','Support your friend 3 times',()=>(F.love||0)>=3],['Cartographer','Discover 8 locations',()=>Object.keys(window.disc).length>=8],['Researcher','Finish 5 academy practicals',()=>nDone()>=5],['Biology Head','Finish every Biology practical',()=>DEPT.Biology.every(i=>academyCompleted[i])],['Full Curriculum','Finish all '+ACT.length+' practicals',()=>nDone()>=ACT.length]];
+const PEOPLE=[['Agent Orion','Academy AI guide (always with you)'],['Commander Vega','Mission commander'],['Dr. Nova Reyes','Biology and astrobiology lead'],['Professor Helix','Chemistry'],['Dr. Lyra Voss','Physics'],['Professor Atlas','Astronomy and planetary science'],['Receptionist','Front desk, Grand Atrium'],['Dax','Rival cadet and pilot']];
+
+/* ---- HUD rendering ---- */
+function render(){
+ const m=M[mi],camp=campusMode,tot=m[4].length;
+ const pct=camp?Math.round(nDone()/ACT.length*100):Math.round(Math.min(oi,tot)/tot*100);
+ $('ch').textContent=camp?(roomMode&&activeRoom?activeRoom.room.toUpperCase():'ASTRA NEXUS ACADEMY · OPEN CAMPUS'):chN(mi);
+ $('mt').textContent=camp?'Free exploration':(mi+1)+'. '+m[1];
+ $('cur').textContent=camp?'➤ Enter a building, then use a lab station':'➤ '+(oi<tot?m[4][oi]:'Mission complete');
+ $('hbf').style.width=pct+'%';
+ $('hud').classList.toggle('x',ST.mode===1);
+ $('bExp').textContent=ST.mode?'▴ COLLAPSE':'▾ EXPAND';
+ $('mdesc').textContent=camp?'Explore freely. Walk into a glowing portal to enter a building. Press ↩ STORY to resume your mission exactly where you left it.':m[3];
+ $('ol').innerHTML=camp?['Biology','Chemistry','Physics','Astrobiology','Aerospace','Astronomy'].map(d=>{const a=ACT.filter(x=>x[1]===d),n=a.filter(x=>academyCompleted[x[0]]).length;return '<li class="'+(n===a.length?'d':n?'c':'')+'">'+(n===a.length?'✔':'○')+' '+d+' '+n+'/'+a.length+'</li>'}).join(''):m[4].map((o,i)=>'<li class="'+(i<oi?'d':i==oi?'c':'')+'">'+(i<oi?'✔':i==oi?'➤':'○')+' '+esc(o)+'</li>').join('');
+ $('mrew').innerHTML=camp?'Activities: <b>'+nDone()+'/'+ACT.length+'</b> · XP '+xp:'Reward: <b>+'+m[5]+' XP</b>'+(m[6]?' · knowledge check +50 XP':'');
+ $('mloc').textContent='Location: '+(camp?(roomMode&&activeRoom?activeRoom.room:'Academy Campus'):LOC[m[0]]);
+ const bb=$('bBack');if(bb)bb.style.display=camp?'block':'none';
+ if(ST.se&&!ST.semin)renderSE();
+}
+const _hud=hud;hud=function(){_hud();render()};
+
+/* ---- SHOW EVERYTHING (read-only) ---- */
+const TABS=[['m','Missions'],['a','Activities'],['p','Progress'],['w','World'],['c','People']];
+function tabM(){return M.map((m,i)=>{const s=status(i),lab={done:'COMPLETED',act:'ACTIVE',lock:'LOCKED'}[s],col={done:'#6bff9a',act:'#ff9d3c',lock:'#8aa0c8'}[s];
+ const obs=m[4].map((o,j)=>{const c=s==='done'||(s==='act'&&j<oi)?'d':(s==='act'&&j===oi)?'c':'l';return '<div class="ob '+c+'">'+(c==='d'?'✔':c==='c'?'➤':'○')+' '+esc(o)+'</div>'}).join('');
+ return '<details class="mi '+s+'" data-k="'+i+'"'+(s==='act'?' open':'')+'><summary>'+(s==='done'?'✔':s==='act'?'➤':'🔒')+' '+(i+1)+'. '+esc(m[1])+'<span class="tag" style="color:'+col+'">'+lab+'</span></summary><div style="opacity:.85;margin:4px 0">'+chN(i)+' · '+LOC[m[0]]+' · '+esc(m[2])+'</div><div style="margin:4px 0">'+esc(m[3])+'</div>'+obs+'<div style="margin-top:4px;color:var(--ac2)">Reward: +'+m[5]+' XP'+(m[6]?' · knowledge check +50 XP':'')+'</div></details>'}).join('')}
+function tabA(){let h='<div class="sec">LABORATORY PRACTICALS ('+nDone()+'/'+ACT.length+')</div>';
+ ['Biology','Chemistry','Physics','Astrobiology','Aerospace','Astronomy'].forEach(d=>{h+='<div class="sec" style="color:var(--ac2)">'+d.toUpperCase()+'</div>';const a=ACT.filter(x=>x[1]===d);a.forEach(x=>{const dn=!!academyCompleted[x[0]];h+='<div class="rw '+(dn?'d':'')+'">'+(dn?'✔':'○')+' '+x[2]+' <span class="tag">'+(dn?'LOGGED':'OPEN')+'</span></div>'});const nx=a.find(x=>!academyCompleted[x[0]]);h+='<div style="opacity:.75;font-size:11.5px">Research assignment: '+(nx?nx[2]:'all complete')+'</div>'});
+ h+='<div class="sec">ARCHIVES</div><div class="rw">Digital Library · Student Registry · Faculty Directory · Timetable · Solar System Archive · Constellation Archive · Observatory Log (reference only, no XP)</div>';return h}
+function tabP(){const L=Math.floor(xp/500)+1,nx=xp<1000?1000:xp<4000?4000:xp<8000?8000:null,pc=nx?Math.round(xp/nx*100):100,md=M.filter((_,i)=>mDone(i)).length;
+ let h='<div class="stat"><div><b>Cadet ID</b><br>NX-'+String(1000+(xp%8999)).padStart(4,'0')+'</div><div><b>Rank</b><br>'+rank()+'</div><div><b>XP</b><br>'+xp+(nx?' / '+nx:' (max rank)')+'<div class="bar"><i style="width:'+pc+'%"></i></div></div><div><b>Academic level</b><br>'+L+'</div><div><b>Story</b><br>'+md+'/25 missions<div class="bar"><i style="width:'+Math.round(md/25*100)+'%"></i></div></div><div><b>Practicals</b><br>'+nDone()+'/'+ACT.length+'<div class="bar"><i style="width:'+Math.round(nDone()/ACT.length*100)+'%"></i></div></div></div>';
+ h+='<div class="sec">ACHIEVEMENTS</div>'+ACH.map(a=>{const ok=a[2]();return '<div class="rw '+(ok?'d':'l')+'">'+(ok?'🏆':'🔒')+' <b>'+a[0]+'</b> · '+a[1]+'</div>'}).join('');
+ h+='<div class="sec">DEPARTMENTS</div>'+['Biology','Chemistry','Physics','Astrobiology','Aerospace','Astronomy'].map(d=>{const a=ACT.filter(x=>x[1]===d),n=a.filter(x=>academyCompleted[x[0]]).length;return '<div class="rw">'+d+' '+n+'/'+a.length+'<div class="bar"><i style="width:'+Math.round(n/a.length*100)+'%"></i></div></div>'}).join('');
+ const jr=ACT.filter(a=>academyCompleted[a[0]]);h+='<div class="sec">RESEARCH JOURNAL</div>'+(jr.length?jr.map(a=>'<div class="rw d">✔ '+a[1]+' — '+a[2]+'</div>').join(''):'<div class="rw l">No practicals logged yet.</div>');
+ h+='<div class="sec">MISSION HISTORY</div>'+(md?M.map((m,i)=>mDone(i)?'<div class="rw d">✔ '+(i+1)+'. '+esc(m[1])+'</div>':'').join(''):'<div class="rw l">No missions finished yet.</div>');return h}
+function tabW(){const all=Object.values(LOC).concat(CAMPUS_BUILDINGS.map(b=>b.room),['Open Campus']),d=window.disc;let n=0;const rows=all.map(l=>{const k=!!d[l];if(k)n++;return '<div class="rw '+(k?'d':'l')+'">'+(k?'📍 '+l:'? Undiscovered')+'</div>'}).join('');return '<div class="sec">DISCOVERED LOCATIONS ('+n+'/'+all.length+')</div>'+rows+'<div class="sec">CAMPUS DEPARTMENTS</div>'+CAMPUS_BUILDINGS.map(b=>'<div class="rw">'+b.name+' <span style="opacity:.7">· '+esc(b.sub)+'</span></div>').join('')}
+function tabC(){return '<div class="sec">STORY CHARACTERS</div>'+PEOPLE.map(p=>'<div class="rw"><b>'+p[0]+'</b> · '+p[1]+'</div>').concat(['<div class="rw"><b>'+BF()+'</b> · Your closest friend at the academy</div>']).join('')+'<div class="sec">FACULTY</div>'+FACULTY.map(f=>{const ids=DEPT[f.dept]||[],n=ids.filter(i=>academyCompleted[i]).length;return '<div class="rw"><b>'+f.name+'</b> · '+f.title+' · '+f.room+' <span class="tag">'+n+'/'+ids.length+' practicals</span></div>'}).join('')}
+function renderSE(){
+ const b=$('seb'),prev=[...b.querySelectorAll('details')],open=prev.length?new Set(prev.filter(d=>d.open).map(d=>d.dataset.k)):null,sc=b.scrollTop;
+ $('set').innerHTML=TABS.map(t=>'<button class="s'+(t[0]===ST.tab?' on':'')+'" data-t="'+t[0]+'">'+t[1]+'</button>').join('');
+ $('set').querySelectorAll('button').forEach(x=>x.onclick=()=>{ST.tab=x.dataset.t;saveUI();b.scrollTop=0;renderSE()});
+ let h='<div class="stat" style="margin-bottom:4px"><div>Current: <b>'+(campusMode?'Open Campus':(mi+1)+'. '+esc(M[mi][1]))+'</b></div><div>XP <b>'+xp+'</b> · '+rank()+'</div></div>';
+ h+={m:tabM,a:tabA,p:tabP,w:tabW,c:tabC}[ST.tab]();b.innerHTML=h;
+ if(open&&ST.tab==='m')b.querySelectorAll('details').forEach(d=>d.open=open.has(d.dataset.k));b.scrollTop=sc}
+function applySE(){const v=ST.se&&!ST.semin;$('se').style.display=v?'flex':'none';$('sePill').style.display=ST.se&&ST.semin?'block':'none';document.body.classList.toggle('seopen',v)}
+function openSE(){ST.se=true;ST.semin=false;applySE();renderSE()}
+function closeSE(){ST.se=false;ST.semin=false;applySE()}
+document.body.insertAdjacentHTML('beforeend','<div id="se" class="p"><div id="seh"><h3>SHOW EVERYTHING</h3><button class="s" id="seMin" title="Minimise">—</button><button id="seX" title="Close">✕</button></div><div id="set"></div><div id="seb"></div><div style="font-size:11px;opacity:.6;margin-top:4px">Read-only overview: nothing here changes your mission, XP or position. You can keep playing while it is open.</div></div><button id="sePill" class="p">▢ SHOW EVERYTHING · restore</button><div id="setp" class="p"><b>SETTINGS</b><br>Music volume<input id="vol" type="range" min="0" max="100"><button id="svNow">💾 Save now</button><p style="margin:6px 0 0;opacity:.8">Autosaves every 20 s and at every objective. Keys: WASD/arrows move · Shift run · E interact · H hint · B board size · M show everything · Esc close.</p></div>');
+$('bAll').onclick=openSE;$('seX').onclick=closeSE;$('seMin').onclick=()=>{ST.semin=true;applySE()};$('sePill').onclick=()=>{ST.semin=false;applySE();renderSE()};
+$('bExp').onclick=()=>{ST.mode^=1;saveUI();render()};
+
+/* ---- toolbar (fixed right column) ---- */
+const tb=(id,txt,top,fn)=>{const b=document.createElement('button');b.id=id;b.className='s tb';b.textContent=txt;b.style.cssText='position:fixed;right:10px;top:calc('+top+'px + env(safe-area-inset-top,0px));z-index:5;margin:0;background:rgba(10,20,45,.9);color:#e8f1ff;border:1px solid #38d4ff';b.onclick=()=>{if($('ov').style.display==='none')fn()};document.body.appendChild(b);return b};
+function doSave(){academySave();tip('💾 Progress saved')}
+tb('saveBtn','💾',220,doSave);
+tb('setBtn','⚙',264,()=>{const s=$('setp');s.style.display=s.style.display==='block'?'none':'block'});
+const back=tb('bBack','↩ STORY',308,()=>{if(busy||!campusMode)return;const k=oi;start(mi);oi=Math.max(0,Math.min(k,M[mi][4].length-1));place();hud()});back.style.display='none';
+$('vol').value=Math.round(ST.vol*100);
+const applyVol=()=>{if(mg)mg.gain.value=mus?ST.vol*.44:0};
+$('vol').oninput=e=>{ST.vol=+e.target.value/100;saveUI();applyVol()};$('svNow').onclick=doSave;
+const _tm=toggleMusic;toggleMusic=function(){_tm();applyVol()};
+const _go=go;go=function(g,c){_go(g,c);applyVol()};
+addEventListener('keydown',e=>{if($('ov').style.display!=='none'||e.repeat)return;const k=e.key.toLowerCase();if(k==='escape'){closeSE();$('setp').style.display='none'}else if(k==='b'){ST.mode^=1;saveUI();render()}else if(k==='m'){ST.se?closeSE():openSE()}});
+
+/* ---- discovered locations + waypoint distance + autosave ---- */
+const _st=start;start=function(i){_st(i);window.disc[LOC[M[i][0]]]=1;render()};
+const _ec=enterCampus;enterCampus=function(){_ec();window.disc['Open Campus']=1;render()};
+const _er=enterAcademyRoom;enterAcademyRoom=function(id){_er(id);const b=CAMPUS_BUILDINGS.find(x=>x.id===id);if(b)window.disc[b.room]=1;render()};
+setInterval(()=>{if($('ov').style.display!=='none')return;let t='';if(campusMode){const l=roomMode?roomTargets:campusTargets;let d=1e9,n='';l.forEach(x=>{const k=Math.hypot(P.position.x-x.x,P.position.z-x.z);if(k<d){d=k;n=x.name}});if(l.length)t='◎ Nearest: '+n+' · '+Math.round(d)+' m'}else if(bc&&bc.visible)t='◎ Waypoint '+Math.round(Math.hypot(bc.position.x-P.position.x,bc.position.z-P.position.z))+' m';if($('hmeta').textContent!==t)$('hmeta').textContent=t},300);
+setInterval(()=>{if($('ov').style.display==='none')academySave()},20000);
+addEventListener('pagehide',()=>{if($('ov').style.display==='none')academySave()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&$('ov').style.display==='none')academySave()});
+
+/* ---- collision ---- */
+window.collide=function(){const p=P.position;
+ if(roomMode){p.x=Math.max(-22.5,Math.min(22.5,p.x));p.z=Math.max(-19.5,Math.min(19.5,p.z));return}
+ if(!campusMode)return;
+ for(const b of CAMPUS_BUILDINGS){const hx=b.w/2+.9,hz=b.d/2+.9,dx=p.x-b.x,dz=p.z-b.z;if(Math.abs(dx)<hx&&Math.abs(dz)<hz){const px=hx-Math.abs(dx),pz=hz-Math.abs(dz);if(px<pz)p.x=b.x+(dx<0?-hx:hx);else p.z=b.z+(dz<0?-hz:hz)}}
+ p.x=Math.max(-80,Math.min(80,p.x));p.z=Math.max(-70,Math.min(70,p.z))};
+
+/* ---- rewards without duplicate XP ---- */
+academyReward=function(id,msg){const first=!academyCompleted[id];academyCompleted[id]=true;if(first)xp+=100;academySave();hud();
+ gOpen('RESEARCH LOG UPDATED',msg+'<p><b>'+(first?'+100 XP':'Already logged · no additional XP')+'</b> · '+nDone()+'/'+ACT.length+' practicals completed.</p>');
+ $('gc').innerHTML='<button onclick="gClose(1)">Continue</button>';GD=()=>{busy=false}};
+
+/* ---- faculty react to progress (also fixes swapped speaker/text) ---- */
+facultyTalk=function(f){const ids=DEPT[f.dept]||[],done=ids.filter(i=>academyCompleted[i]),left=ids.filter(i=>!academyCompleted[i]);
+ const mood=!done.length?'You have not completed any of my practicals yet. Shall we begin?':left.length?'You have completed '+done.length+' of '+ids.length+' '+f.dept+' practicals. '+left.length+' remain.':'You have completed every '+f.dept+' practical. Excellent work, Cadet.';
+ say(f.line+' '+f.about+' '+mood,f.name+' · '+f.title,[left.length?['Begin next practical',()=>launchAcademyActivity(left[0])]:['Review a practical',()=>launchAcademyActivity(ids[0]||'library')],['Goodbye',()=>busy=false,1]])};
+
+/* ---- Orion: local tutor/guide (no external AI service exists in this file, so this IS the fallback) ---- */
+function orionMenu(){say('How can I assist, Cadet? I can guide you, share a science tip, or review your progress.','Agent Orion',[['Where to?',oWhere],['Science tip',oTip],['My progress',oProg],['Close',()=>busy=false,1]])}
+function oWhere(){let t;if(campusMode)t=roomMode?'Stations here: '+roomTargets.filter(x=>x.kind==='station').map(x=>x.name).join(', ')+'. Walk to a glowing ring and press E. The exit returns you to campus.':'Biology is the west wing, Chemistry the east wing, Physics south-west, Astrobiology south-east, Planetarium to the north. Walk into a glowing portal and press E. ↩ STORY resumes your mission.';else t='Objective: '+(M[mi][4][oi]||'Mission complete')+'. Follow the orange beacon'+(bc&&bc.visible?' ('+Math.round(Math.hypot(bc.position.x-P.position.x,bc.position.z-P.position.z))+' m away)':'')+' and press E.';say(t,'Agent Orion',[['Back',orionMenu],['Close',()=>busy=false,1]])}
+function oTip(){say(FACT[Math.floor(Math.random()*FACT.length)],'Agent Orion',[['Another',oTip],['Back',orionMenu],['Close',()=>busy=false,1]])}
+function oProg(){say('Rank '+rank()+' · '+xp+' XP · '+Math.min(25,M.filter((_,i)=>mDone(i)).length)+'/25 missions · '+nDone()+'/'+ACT.length+' practicals · '+Object.keys(window.disc).length+' locations discovered.','Agent Orion',[['Back',orionMenu],['Close',()=>busy=false,1]])}
+const ob=$('orionCampusBtn');if(ob){ob.onclick=()=>{if($('ov').style.display!=='none'||busy)return;orionMenu()};ob.classList.add('tb')}
+const cb=$('campusBtn');if(cb)cb.classList.add('tb');
+
+/* ---- NEW REAL LABS (variables, results, explanations) ---- */
+const rngRow=(id,lab,min,max,val,step)=>'<label>'+lab+' <input id="'+id+'" type="range" min="'+min+'" max="'+max+'" value="'+val+'" step="'+(step||1)+'"></label>';
+const NEW={
+physiology(id){
+ gOpen('HUMAN PHYSIOLOGY','Select each structure to study it. View at least 5, then answer the check.');
+ const B=[['Skull','Protects the brain. The adult skull has 22 bones.'],['Clavicle','The collarbone links arm to torso; it is the most commonly fractured bone.'],['Humerus','The upper-arm bone, hinged at shoulder and elbow.'],['Rib cage','Twelve pairs of ribs protect the heart and lungs and move during breathing.'],['Femur','The longest and strongest bone in the body.'],['Heart','Four chambers: the right side pumps blood to the lungs, the left side to the body.'],['Lungs','Gas exchange happens across roughly 480 million tiny alveoli.'],['Bone loss in space','Without load, astronauts lose about 1 to 1.5% of bone density per month, hence daily exercise.']],seen=new Set();
+ $('gc').innerHTML='<canvas id="phC" width="520" height="230"></canvas><div class="row" id="phB">'+B.map((b,i)=>'<button class="s" data-b="'+i+'">'+b[0]+'</button>').join('')+'</div><div id="phI" style="padding:8px;border:1px solid #38d4ff;border-radius:8px">Select a structure.</div><div id="phQ" style="margin-top:8px"></div>';
+ const cx=$('phC').getContext('2d');
+ const draw=s=>{const c=k=>(s===k||(s===7&&(k===2||k===4)))?'#ff9d3c':'#cfe0f0';cx.fillStyle='#07111e';cx.fillRect(0,0,520,230);cx.lineWidth=5;cx.lineCap='round';
+  cx.strokeStyle=c(0);cx.beginPath();cx.arc(260,28,20,0,7);cx.stroke();cx.strokeStyle='#8fa4bb';cx.beginPath();cx.moveTo(260,50);cx.lineTo(260,130);cx.stroke();
+  cx.strokeStyle=c(1);cx.beginPath();cx.moveTo(215,68);cx.lineTo(305,68);cx.stroke();cx.strokeStyle=c(2);cx.beginPath();cx.moveTo(215,68);cx.lineTo(185,120);cx.moveTo(305,68);cx.lineTo(335,120);cx.stroke();
+  cx.strokeStyle=c(3);cx.lineWidth=2;for(let i=0;i<4;i++){cx.beginPath();cx.ellipse(260,78+i*12,38,11,0,0,7);cx.stroke()}cx.lineWidth=5;
+  cx.strokeStyle=c(4);cx.beginPath();cx.moveTo(245,135);cx.lineTo(235,215);cx.moveTo(275,135);cx.lineTo(285,215);cx.stroke();
+  cx.globalAlpha=.6;cx.fillStyle=s===6?'#ff9d3c':'#6bb7e8';cx.beginPath();cx.ellipse(238,88,12,22,0,0,7);cx.fill();cx.beginPath();cx.ellipse(284,88,12,22,0,0,7);cx.fill();cx.globalAlpha=1;
+  cx.fillStyle=s===5?'#ff9d3c':'#e0525e';cx.beginPath();cx.arc(266,92,10,0,7);cx.fill()};
+ draw(-1);
+ const q=()=>{if(seen.size<5)return;$('phQ').innerHTML='<b>Check:</b> Which is the longest bone in the human body?<div class="row"><button class="s" data-a="0">Humerus</button><button class="s" data-a="1">Femur</button><button class="s" data-a="2">Clavicle</button></div>';$('phQ').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>+b.dataset.a===1?academyReward(id,'Anatomy check passed. You studied the skeleton, heart and lungs and how spaceflight affects bone.'):gMsg('Not quite. Think about the thigh.'))};
+ $('phB').querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{const i=+b.dataset.b;seen.add(i);$('phI').innerHTML='<b>'+B[i][0]+'</b><br>'+B[i][1];draw(i);q()})},
+optics(id){
+ gOpen('OPTICS BENCH · SNELL’S LAW','Light passes from air (n₁ = 1.00) into a medium. n₁ sin θ₁ = n₂ sin θ₂. <b>Task:</b> set the angle so the refracted angle is 20° (±1°).');
+ $('gc').innerHTML='<canvas id="opC" width="520" height="200"></canvas>'+rngRow('oa','Incident angle θ₁',0,80,30)+'<div class="row"><select id="om" style="padding:6px;background:#10233b;color:#fff;border:1px solid #38d4ff;border-radius:6px"><option value="1.33">Water n=1.33</option><option value="1.5" selected>Glass n=1.50</option><option value="2.42">Diamond n=2.42</option></select><button id="oc">Record measurement</button></div><div id="oR"></div>';
+ const cx=$('opC').getContext('2d'),r=()=>{const a=+$('oa').value,n=+$('om').value,t2=Math.asin(Math.sin(a*Math.PI/180)/n)*180/Math.PI;cx.fillStyle='#07111e';cx.fillRect(0,0,520,200);cx.fillStyle='rgba(60,140,220,.28)';cx.fillRect(0,100,520,100);cx.strokeStyle='#789';cx.setLineDash([5,5]);cx.beginPath();cx.moveTo(260,0);cx.lineTo(260,200);cx.stroke();cx.setLineDash([]);cx.strokeStyle='#ffcc33';cx.lineWidth=3;const s1=Math.sin(a*Math.PI/180),c1=Math.cos(a*Math.PI/180),s2=Math.sin(t2*Math.PI/180),c2=Math.cos(t2*Math.PI/180);cx.beginPath();cx.moveTo(260-s1*95,100-c1*95);cx.lineTo(260,100);cx.lineTo(260+s2*95,100+c2*95);cx.stroke();$('oR').innerHTML='θ₁ = <b>'+a+'°</b> → θ₂ = <b>'+t2.toFixed(1)+'°</b> (the ray bends toward the normal in a denser medium)';return t2};
+ $('oa').oninput=r;$('om').onchange=r;r();$('oc').onclick=()=>{const t=r();Math.abs(t-20)<=1?academyReward(id,'Measurement recorded. Higher refractive index bends light more strongly toward the normal; this is how lenses work.'):gMsg('Refracted angle is '+t.toFixed(1)+'°. Aim for 20°.')}},
+waves(id){
+ gOpen('WAVE LAB · v = f × λ','Wave speed equals frequency times wavelength. <b>Task:</b> make a wave travelling at 10 m/s (±0.25).');
+ $('gc').innerHTML='<canvas id="wvC" width="520" height="110"></canvas>'+rngRow('wf','Frequency f (Hz)',1,20,3)+rngRow('wl','Wavelength λ (m)',.5,10,3,.5)+'<div id="wR"></div><button id="wk">Record wave</button>';
+ const cx=$('wvC').getContext('2d'),r=()=>{const f=+$('wf').value,l=+$('wl').value,v=f*l;cx.fillStyle='#07111e';cx.fillRect(0,0,520,110);cx.strokeStyle='#38d4ff';cx.lineWidth=2;cx.beginPath();for(let x=0;x<520;x+=2){const y=55+38*Math.sin(2*Math.PI*(x/26)/l);x?cx.lineTo(x,y):cx.moveTo(x,y)}cx.stroke();$('wR').innerHTML='f = '+f+' Hz · λ = '+l+' m → v = <b>'+v.toFixed(1)+' m/s</b> (view spans 20 m)';return v};
+ $('wf').oninput=r;$('wl').oninput=r;r();$('wk').onclick=()=>Math.abs(r()-10)<=.25?academyReward(id,'Wave recorded. For a fixed speed, higher frequency means shorter wavelength.'):gMsg('Speed is '+r().toFixed(1)+' m/s. Adjust f × λ to equal 10.')},
+motion(id){
+ gOpen('PROJECTILE MOTION','Ignoring air resistance (g = 9.81 m/s²): range = v² sin2θ / g. <b>Task:</b> land the projectile on the target 40 m away (±2 m).');
+ $('gc').innerHTML='<canvas id="mtC" width="520" height="170"></canvas>'+rngRow('mv','Launch speed (m/s)',5,30,15)+rngRow('ma','Launch angle (°)',10,80,45)+'<div id="mR"></div><button id="mf">Fire</button>';
+ const cx=$('mtC').getContext('2d'),g=9.81,S=5,r=()=>{const v=+$('mv').value,a=+$('ma').value*Math.PI/180,R=v*v*Math.sin(2*a)/g,H=v*v*Math.sin(a)**2/(2*g),T=2*v*Math.sin(a)/g;cx.fillStyle='#07111e';cx.fillRect(0,0,520,170);cx.fillStyle='#2a5a2a';cx.fillRect(0,150,520,20);cx.fillStyle='#ff5577';cx.fillRect(40*S+10-6,142,12,8);cx.strokeStyle='#ffcc33';cx.beginPath();for(let t=0;t<=T;t+=T/60){const x=10+v*Math.cos(a)*t*S,y=150-(v*Math.sin(a)*t-.5*g*t*t)*S;t?cx.lineTo(x,y):cx.moveTo(x,y)}cx.stroke();$('mR').innerHTML='Range <b>'+R.toFixed(1)+' m</b> · apex '+H.toFixed(1)+' m · flight time '+T.toFixed(2)+' s';return R};
+ $('mv').oninput=r;$('ma').oninput=r;r();$('mf').onclick=()=>{const R=r();Math.abs(R-40)<=2?academyReward(id,'Direct hit. Range is greatest at 45°, and the two angles that are equally far from 45° give the same range.'):gMsg('Landed at '+R.toFixed(1)+' m. Adjust speed or angle.')}},
+exoplanet(id){
+ gOpen('EXOPLANET TRANSIT SCANNER','When a planet crosses its star, brightness dips by (Rp / R★)². The star here has radius 109 Earth radii (a Sun-like star). <b>Task:</b> choose a planet radius that gives a dip of 1.0% (±0.1%).');
+ $('gc').innerHTML='<canvas id="exC" width="520" height="130"></canvas>'+rngRow('er','Planet radius (Earth radii)',1,15,5,.1)+'<div id="eR"></div><button id="ek">Log detection</button>';
+ const cx=$('exC').getContext('2d'),r=()=>{const rp=+$('er').value,d=(rp/109.1)**2*100;cx.fillStyle='#07111e';cx.fillRect(0,0,520,130);cx.strokeStyle='#7dffb0';cx.lineWidth=2;cx.beginPath();const dy=d*30;cx.moveTo(0,30);cx.lineTo(180,30);cx.lineTo(200,30+dy);cx.lineTo(320,30+dy);cx.lineTo(340,30);cx.lineTo(520,30);cx.stroke();$('eR').innerHTML='Rp = '+rp.toFixed(1)+' R⊕ → dip = <b>'+d.toFixed(2)+'%</b> (Jupiter, 11.2 R⊕, gives about 1.05%)';return d};
+ $('er').oninput=r;r();$('ek').onclick=()=>{const d=r();d>=.9&&d<=1.1?academyReward(id,'Detection logged. The transit method measures planet size; combined with orbit timing it reveals whether a world could be habitable.'):gMsg('Dip is '+d.toFixed(2)+'%. Aim for 1.0%.')}},
+sample(id){
+ gOpen('EXTREMOPHILE SAMPLE ANALYSIS','Match each environment to the type of extremophile adapted to it. Extremophiles show life’s limits on Earth; they do not prove life elsewhere.');
+ const sites=[['Boiling hot spring, 75 °C','thermophile'],['Antarctic lake water, −2 °C','psychrophile'],['Salt lake, about 4 M NaCl','halophile'],['Acid mine drainage, pH 2','acidophile']],opts=['thermophile','psychrophile','halophile','acidophile'];
+ $('gc').innerHTML=sites.map((s,i)=>'<p>'+s[0]+' → <select id="sx'+i+'" style="padding:6px;background:#10233b;color:#fff;border:1px solid #38d4ff;border-radius:6px"><option value="">choose…</option>'+opts.map(o=>'<option>'+o+'</option>').join('')+'</select></p>').join('')+'<button id="sk2">Submit analysis</button>';
+ $('sk2').onclick=()=>sites.every((s,i)=>$('sx'+i).value===s[1])?academyReward(id,'All four matched: heat-loving, cold-loving, salt-loving and acid-loving microbes. Europa and Mars research uses these as analogues.'):gMsg('At least one match is wrong. Think about the suffix: -phile means “loving”.')},
+mission(id){
+ gOpen('BIOSIGNATURE BRIEFING','A telescope reads an exoplanet’s atmosphere. Which observation is the strongest candidate biosignature?');
+ $('gc').innerHTML='<div class="row">'+['Oxygen (O₂) alone','Methane (CH₄) alone','O₂ and CH₄ together','Carbon dioxide (CO₂)'].map((o,i)=>'<button class="s" data-i="'+i+'">'+o+'</button>').join('')+'</div>';
+ $('gc').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>+b.dataset.i===2?academyReward(id,'O₂ and CH₄ react quickly, so seeing both suggests something keeps replenishing them. That is a disequilibrium biosignature, still evidence rather than proof.'):gMsg('Each of those can also be produced without life. Look for a combination that should not persist.'))}
+};
+const _la=launchAcademyActivity;launchAcademyActivity=function(id){if(NEW[id]){NEW[id](id);return}_la(id)};
+window.NovarisBoard={render,openSE,closeSE};
+applySE();
+})();
+
+const clk=new THREE.Clock();
+(function loop(){requestAnimationFrame(loop);const dt=Math.min(clk.getDelta(),.05),t=clk.elapsedTime;ups.forEach(u=>u(t));if($('ov').style.display!=='none'){C.position.set(Math.sin(t*.15)*32,12,Math.cos(t*.15)*32);C.lookAt(0,5,0);R.render(S,C);return}
+if(!busy){
+  let ix=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
+  let iz=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+  if(jo){ix+=jo.dx||0;iz+=jo.dy||0}
+  if(joyVec.x||joyVec.y){ix+=joyVec.x;iz+=joyVec.y}
+  const il=Math.hypot(ix,iz);if(il>1){ix/=il;iz/=il}
+  // Smooth acceleration / deceleration
+  const accel=28,maxSpd=(keys.shift?14:9.5),fric=12;
+  if(il>.08){playerVel.x+=(ix*maxSpd-playerVel.x)*Math.min(1,accel*dt);playerVel.z+=(iz*maxSpd-playerVel.z)*Math.min(1,accel*dt)}
+  else{playerVel.x*=Math.max(0,1-fric*dt);playerVel.z*=Math.max(0,1-fric*dt);if(Math.hypot(playerVel.x,playerVel.z)<.15){playerVel.x=playerVel.z=0}}
+  P.position.x+=playerVel.x*dt;P.position.z+=playerVel.z*dt;if(window.collide)collide();
+  if(Math.hypot(playerVel.x,playerVel.z)>.2)P.rotation.y=Math.atan2(playerVel.x,playerVel.z);
+  const d=Math.hypot(P.position.x,P.position.z);const lim=campusMode?78:28;if(d>lim){P.position.x*=lim/d;P.position.z*=lim/d;playerVel.x*=.3;playerVel.z*=.3}
+}
+const zg=!campusMode&&["eva","deep"].includes(M[mi][0]);
+const mv=!busy&&(Math.hypot(playerVel.x,playerVel.z)>.25||keys.w||keys.a||keys.s||keys.d||keys.arrowup||keys.arrowdown||keys.arrowleft||keys.arrowright||jo||joyActive);
+const us=P.userData;if(us.l){const sw=mv?Math.sin(t*11)*.85:Math.sin(t*1.4)*.07;us.l.rotation.x=sw;us.r.rotation.x=-sw;us.al.rotation.x=-sw*.9;us.ar.rotation.x=sw*.9}
+pt.position.set(P.position.x,5,P.position.z);
+if(orion){orion.position.lerp(new THREE.Vector3(P.position.x+2.2,P.position.y+3.8+Math.sin(t*2.2)*.35,P.position.z+.6),.09);orion.children[0].rotation.y=t*1.1;orion.userData.r.rotation.x=t*1.7}
+
+npcs.forEach((n,i)=>{const u=n.userData,dx=(u.wander?u.tx:P.position.x)-n.position.x,dz=(u.wander?u.tz:P.position.z)-n.position.z,d=Math.hypot(dx,dz);if(u.wander){if(d<.5){u.tx=(Math.random()-.5)*44;u.tz=(Math.random()-.5)*44;if(Math.hypot(u.tx,u.tz)>26){u.tx*=.5;u.tz*=.5}}else if(n.position.distanceTo(P.position)>3){n.position.x+=dx/d*2*dt;n.position.z+=dz/d*2*dt;n.rotation.y=Math.atan2(dx,dz)}u.l.rotation.x=Math.sin(t*8+i)*.6;u.r.rotation.x=-u.l.rotation.x;u.arm.rotation.x=u.l.rotation.x;u.al.rotation.x=-u.l.rotation.x}else if(u.follow){if(d>3.4){n.position.x+=dx/d*Math.min(d*.8,8)*dt;n.position.z+=dz/d*Math.min(d*.8,8)*dt;u.l.rotation.x=Math.sin(t*9)*.6;u.r.rotation.x=-u.l.rotation.x}else{u.l.rotation.x=u.r.rotation.x=0}n.rotation.y=Math.atan2(dx,dz)}else{if(d<14)n.rotation.y=Math.atan2(dx,dz);u.arm.rotation.z=d<9?2.5+Math.sin(t*6)*.35:.12}n.position.y=zg?Math.sin(t*2+i)*.3+.4:0});
+P.position.y=zg?Math.sin(t*2)*.32+.42:Math.abs(Math.sin(t*(mv?12:1.6)))*(mv?.15:0);
+if(bc&&bc.visible){bc.rotation.y=t;bc.children[1].position.y=.2+Math.abs(Math.sin(t*3))*.6;const nn=busy?null:nearNPC(),bn=bc.position.distanceTo(P.position)<3.5,near=!busy&&(bn||!!nn);$('pr').textContent=bn?'Press E — Interact':nn?'Press E — Talk to '+nn.userData.name:'';{const dx=bc.position.x-P.position.x,dz=bc.position.z-P.position.z;$('ai').style.transform='rotate('+Math.atan2(dx,-dz)+'rad)';$('ad').textContent=Math.round(Math.hypot(dx,dz))+' m';$('ar').style.display=busy?'none':'flex'}$("pr").style.display=near?"block":"none"}else $("pr").style.display="none";
+if(campusMode)academyFrame();
+MC.forEach((m,i)=>{const u=m.userData,st=i<oi?2:i==oi?(WK?3:1):0;u.lamp.material.color.setHex(st==2?0x44ff88:st>=1?(Math.sin(t*(st==3?16:6))>0?0xff9d3c:0x553311):0x444444);u.scr.emissive.setHex(st==2?0x2aff88:st>=1?0x38d4ff:0x103040);u.scr.emissiveIntensity=st?.9:.4;if(u.mov)u.mov(t,st,m)});
+if(CS){const s=CS.s[CS.i];CS.t+=dt;C.position.lerp(new THREE.Vector3(s.c[0],s.c[1],s.c[2]),.03);CL.lerp(new THREE.Vector3(s.l[0],s.l[1],s.l[2]),.05);C.lookAt(CL);if(CS.t>(s.d||5))nextShot()}else{
+  // Smooth cinematic camera with slight lag and height bob
+  const camTargetX=P.position.x + Math.sin(P.rotation.y)*.4;
+  const camTargetZ=P.position.z + Math.cos(P.rotation.y)*.4;
+  C.position.lerp(new THREE.Vector3(camTargetX, P.position.y+8.6 + (mv?Math.sin(t*8)*.08:0), camTargetZ+12.5),.12);
+  C.lookAt(P.position.x, 1.6 + (mv?Math.sin(t*6)*.05:0), P.position.z-1.8);
+}R.render(S,C)})();
+
+</script></body></html>

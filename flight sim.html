@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aerospace Systems Engineering Simulator - Rocket Builder & Launch System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        space: {
+                            bg: '#05070B',
+                            panel: '#0C1017',
+                            border: '#1A2332',
+                            accent: '#0284C7',
+                            cyan: '#06B6D4',
+                            amber: '#F59E0B',
+                            red: '#EF4444',
+                            green: '#10B981',
+                            gold: '#EAB308'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #05070B; }
+        ::-webkit-scrollbar-thumb { background: #1A2332; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
+        .scanline {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 240, 255, 0.02) 50%,
+                rgba(0, 240, 255, 0.02)
+            );
+            background-size: 100% 4px;
+        }
+
+        .hud-glass {
+            background: rgba(12, 16, 23, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(26, 35, 50, 0.8);
+        }
+
+        .glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.15); }
+        .glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
+    </style>
+</head>
+<body class="bg-space-bg text-slate-200 font-mono antialiased h-screen overflow-hidden flex flex-col select-none scanline">
+
+    <!-- TOP CONTROL NAVIGATION / SYSTEM BAR -->
+    <header class="h-12 border-b border-space-border bg-space-panel/90 flex items-center justify-between px-4 z-30 shrink-0">
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                <svg class="w-6 h-6 text-space-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                <span class="font-bold tracking-wider text-sm text-white">ORBITAL DYNAMICS ENGINE</span>
+                <span class="text-[10px] bg-space-accent/20 text-space-cyan px-2 py-0.5 rounded border border-space-accent/40 font-semibold">CAD & LAUNCH SIM v3.4</span>
+            </div>
+
+            <div class="h-5 w-[1px] bg-space-border"></div>
+
+            <!-- Mode Selector Tabs -->
+            <div class="flex space-x-1">
+                <button id="tabBuilderBtn" class="px-3 py-1 rounded text-xs font-bold bg-space-accent/20 text-space-cyan border border-space-accent/50 transition">1. CAD BUILDER</button>
+                <button id="tabLaunchBtn" class="px-3 py-1 rounded text-xs text-slate-400 hover:text-white transition border border-transparent">2. LAUNCH SIMULATOR</button>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-5 text-xs">
+            <div class="flex items-center space-x-2">
+                <span class="text-slate-400">SCENARIO:</span>
+                <select id="scenarioSelect" class="bg-space-bg text-xs border border-space-border rounded px-2 py-0.5 text-space-cyan focus:outline-none">
+                    <option value="suborbital">Mission 1: Suborbital Hop (100km Karman Line)</option>
+                    <option value="leo" selected>Mission 2: Low Earth Orbit (200km Circular LEO)</option>
+                    <option value="gto">Mission 3: Geostationary Transfer (GTO Payload)</option>
+                    <option value="sandbox">Sandbox: Custom Flight Parameters</option>
+                </select>
+            </div>
+
+            <button id="audioToggleBtn" class="p-1 rounded border border-space-border hover:bg-slate-800 text-slate-300">
+                <svg id="audioIcon" class="w-4 h-4 text-space-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 6l-4 4H4v4h4l4 4V6z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN INTERACTIVE WORKSPACE (BUILDER VS LAUNCH MODE) -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- ================= MODE 1: CAD BUILDER VIEW ================= -->
+        <div id="builderView" class="w-full h-full flex shrink-0 z-10 bg-space-bg">
+
+            <!-- LEFT COMPONENT PALETTE -->
+            <aside class="w-80 border-r border-space-border bg-space-panel flex flex-col shrink-0">
+                <div class="p-3 border-b border-space-border bg-slate-900/50 flex justify-between items-center">
+                    <h2 class="text-xs font-bold text-space-cyan flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        AEROSPACE COMPONENT LIBRARY
+                    </h2>
+                </div>
+
+                <div class="p-3 flex-1 overflow-y-auto space-y-4 text-xs">
+                    
+                    <!-- Engine Specs Selector -->
+                    <div>
+                        <div class="text-[11px] font-bold text-slate-400 mb-2 border-b border-space-border pb-1">1. ROCKET ENGINES</div>
+                        <div class="space-y-1.5" id="enginePalette">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Fuel Tanks Selector -->
+                    <div>
+                        <div class="text-[11px] font-bold text-slate-400 mb-2 border-b border-space-border pb-1">2. PROPELLANT TANKS</div>
+                        <div class="space-y-1.5" id="tankPalette">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Decouplers & Fairings -->
+                    <div>
+                        <div class="text-[11px] font-bold text-slate-400 mb-2 border-b border-space-border pb-1">3. STAGING & PAYLOAD</div>
+                        <div class="space-y-1.5" id="structurePalette">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CENTER CAD BUILDER CANVAS -->
+            <main class="flex-1 flex flex-col relative bg-space-bg">
+                <div class="absolute top-3 left-3 z-10 flex space-x-2">
+                    <button id="clearBuildBtn" class="px-2.5 py-1 bg-slate-900/80 hover:bg-red-950 border border-space-border hover:border-red-800 text-xs text-slate-300 rounded">CLEAR STACK</button>
+                    <button id="loadPresetBtn" class="px-2.5 py-1 bg-slate-900/80 hover:bg-slate-800 border border-space-border text-xs text-space-cyan rounded">LOAD TWO-STAGE LEO PRESET</button>
+                </div>
+
+                <!-- CAD Blueprint Assembly Canvas -->
+                <div class="flex-1 relative flex items-center justify-center overflow-hidden">
+                    <canvas id="builderCanvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+                </div>
+
+                <div class="h-10 border-t border-space-border bg-space-panel/80 flex items-center justify-between px-4 text-xs text-slate-400">
+                    <span>ASSEMBLY GUIDANCE: Click components on left to append to stack.</span>
+                    <span id="cadStackHeight">HEIGHT: 0.0 m</span>
+                </div>
+            </main>
+
+            <!-- RIGHT ANALYTICS TELEMETRY PANEL -->
+            <aside class="w-88 border-l border-space-border bg-space-panel flex flex-col shrink-0">
+                <div class="p-3 border-b border-space-border bg-slate-900/50 flex justify-between items-center">
+                    <h2 class="text-xs font-bold text-space-cyan flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
+                        FLIGHT MECHANICS ANALYTICS
+                    </h2>
+                </div>
+
+                <div class="p-4 flex-1 overflow-y-auto space-y-4 text-xs">
+
+                    <!-- Mass Summary -->
+                    <div class="hud-glass p-3 rounded space-y-1.5">
+                        <div class="text-slate-300 font-bold border-b border-space-border pb-1 flex justify-between">
+                            <span>TOTAL LAUNCH MASS (m₀)</span>
+                            <span id="cadTotalMass" class="text-space-cyan">0 metric tons</span>
+                        </div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400">DRY MASS (m_f):</span><span id="cadDryMass" class="text-slate-200">0 t</span></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400">PROPELLANT MASS:</span><span id="cadPropMass" class="text-space-gold">0 t</span></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400">WET/DRY RATIO:</span><span id="cadWetDryRatio" class="text-slate-200">1.00</span></div>
+                    </div>
+
+                    <!-- Thrust and TWR -->
+                    <div class="hud-glass p-3 rounded space-y-1.5">
+                        <div class="text-slate-300 font-bold border-b border-space-border pb-1 flex justify-between">
+                            <span>THRUST & TWR ANALYSIS</span>
+                            <span id="cadTwrStatus" class="text-space-red font-bold">TWR < 1.0 (NO LIFTOFF)</span>
+                        </div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400">STAGE 1 SEA-LEVEL THRUST:</span><span id="cadThrustSL" class="text-slate-200">0 kN</span></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400">SEA-LEVEL TWR:</span><span id="cadTwrSL" class="text-slate-200">0.00</span></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400">VACUUM TWR:</span><span id="cadTwrVac" class="text-slate-200">0.00</span></div>
+                    </div>
+
+                    <!-- Delta-V Budget Stage Breakdown -->
+                    <div class="hud-glass p-3 rounded space-y-2">
+                        <div class="text-slate-300 font-bold border-b border-space-border pb-1 flex justify-between">
+                            <span>TSIOLKOVSKY Δv BUDGET</span>
+                            <span id="cadTotalDeltav" class="text-space-green font-bold">0 m/s</span>
+                        </div>
+                        <div id="cadStageBreakdown" class="space-y-1.5 text-[11px]">
+                            <!-- Populated via JS -->
+                        </div>
+                        <div class="text-[10px] text-slate-500 pt-1 border-t border-space-border">
+                            LEO Orbit Insertion requires ~9,300 m/s total Δv.
+                        </div>
+                    </div>
+
+                    <!-- Stability Analysis -->
+                    <div class="hud-glass p-3 rounded space-y-1.5">
+                        <div class="text-slate-300 font-bold border-b border-space-border pb-1">AERODYNAMIC STABILITY</div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400">CENTER OF MASS (CoM):</span><span id="cadComVal" class="text-slate-200">0.0 m</span></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400">CENTER OF THRUST (CoT):</span><span id="cadCotVal" class="text-slate-200">0.0 m</span></div>
+                        <div class="flex justify-between text-[11px]"><span class="text-slate-400">STATIC MARGIN:</span><span id="cadStabilityStatus" class="text-space-green">BALANCED</span></div>
+                    </div>
+
+                    <!-- PROCEED TO LAUNCH PAD BUTTON -->
+                    <button id="proceedToLaunchBtn" class="w-full bg-space-green hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded border border-emerald-400 text-xs tracking-wider shadow-lg transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        TRANSFER VEHICLE TO LAUNCH PAD
+                    </button>
+                </div>
+            </aside>
+        </div>
+
+
+        <!-- ================= MODE 2: LAUNCH SIMULATOR VIEW ================= -->
+        <div id="launchView" class="w-full h-full flex shrink-0 z-10 bg-space-bg hidden relative">
+
+            <!-- MAIN FLIGHT VIEW CANVAS (CANVAS ZOOM / ORBIT MAP) -->
+            <div class="flex-1 relative overflow-hidden bg-black flex items-center justify-center">
+                <canvas id="simCanvas" class="w-full h-full block"></canvas>
+
+                <!-- TOP HUD OVERLAY TELEMETRY -->
+                <div class="absolute top-3 left-3 right-3 pointer-events-none flex justify-between items-start">
+                    
+                    <!-- Left: Primary Flight Metrics -->
+                    <div class="hud-glass p-3 rounded-lg space-y-1 text-xs w-60 pointer-events-auto">
+                        <div class="text-space-cyan font-bold border-b border-space-border pb-1 flex justify-between">
+                            <span>FLIGHT TELEMETRY</span>
+                            <span id="simPhaseText" class="text-space-gold">PRE-LAUNCH</span>
+                        </div>
+                        <div class="flex justify-between"><span class="text-slate-400">ALTITUDE:</span><span id="hudAlt" class="text-white font-bold">0.00 km</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">DOWNRANGE:</span><span id="hudDownrange" class="text-slate-200">0.00 km</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">ORBITAL VELOCITY:</span><span id="hudVel" class="text-space-green font-bold">0 m/s</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">VERTICAL SPEED:</span><span id="hudVSpeed" class="text-slate-200">0 m/s</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">HORIZ SPEED:</span><span id="hudHSpeed" class="text-slate-200">0 m/s</span></div>
+                    </div>
+
+                    <!-- Center: NavBall Horizon & Pitch Indicator -->
+                    <div class="hud-glass p-2.5 rounded-full border border-space-border flex flex-col items-center justify-center w-28 h-28 pointer-events-auto relative">
+                        <canvas id="navBallCanvas" class="w-20 h-20 rounded-full bg-slate-950 border border-space-border"></canvas>
+                        <span id="navPitchText" class="text-[10px] text-space-cyan font-bold mt-0.5">PITCH: 90°</span>
+                    </div>
+
+                    <!-- Right: Aerodynamic & Engine Telemetry -->
+                    <div class="hud-glass p-3 rounded-lg space-y-1 text-xs w-64 pointer-events-auto">
+                        <div class="text-space-cyan font-bold border-b border-space-border pb-1 flex justify-between">
+                            <span>AERODYNAMIC & POWER</span>
+                            <span id="simMaxQBadge" class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">NOMINAL</span>
+                        </div>
+                        <div class="flex justify-between"><span class="text-slate-400">DYNAMIC PRESS (q):</span><span id="hudDynamicQ" class="text-slate-200">0.0 kPa</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">G-FORCE:</span><span id="hudGForce" class="text-space-gold font-bold">1.00 G</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">ATM DENSITY (ρ):</span><span id="hudDensity" class="text-slate-200">1.225 kg/m³</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">ACTIVE STAGE FUEL:</span><span id="hudStageFuel" class="text-space-green font-bold">100 %</span></div>
+                        <div class="w-full bg-slate-800 h-1.5 rounded overflow-hidden">
+                            <div id="hudFuelBar" class="bg-space-green h-full w-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTTOM ORBITAL ELEMENTS HUD -->
+                <div class="absolute bottom-4 left-4 pointer-events-none">
+                    <div class="hud-glass p-2.5 rounded text-xs space-y-1 w-64 pointer-events-auto">
+                        <div class="text-slate-300 font-bold border-b border-space-border pb-1 flex justify-between">
+                            <span>KEPLERIAN ORBIT METRICS</span>
+                            <span id="hudOrbitStatus" class="text-space-red">SUBORBITAL</span>
+                        </div>
+                        <div class="flex justify-between"><span class="text-slate-400">APOAPSIS (Ra):</span><span id="hudApoapsis" class="text-slate-200">-- km</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">PERIAPSIS (Rp):</span><span id="hudPeriapsis" class="text-slate-200">-- km</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">ECCENTRICITY (e):</span><span id="hudEccentricity" class="text-slate-200">1.000</span></div>
+                    </div>
+                </div>
+
+                <!-- VIEW TOGGLES (FLIGHT CAM VS ORBIT MAP) -->
+                <div class="absolute top-20 right-3 flex flex-col space-y-2 pointer-events-auto">
+                    <button id="toggleOrbitMapBtn" class="px-3 py-1.5 bg-space-panel border border-space-border hover:border-space-cyan rounded text-xs text-space-cyan font-bold shadow">
+                        TOGGLE ORBIT MAP (M)
+                    </button>
+                    <button id="autoGuidanceBtn" class="px-3 py-1.5 bg-space-panel border border-space-border hover:border-space-green rounded text-xs text-space-green font-bold shadow">
+                        AUTO-GUIDANCE: OFF
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT LAUNCH COMMAND CONTROL PANEL -->
+            <aside class="w-80 border-l border-space-border bg-space-panel flex flex-col shrink-0">
+                <div class="p-3 border-b border-space-border bg-slate-900/50 flex justify-between items-center">
+                    <h2 class="text-xs font-bold text-space-cyan flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                        FLIGHT DIRECTOR CONSOLE
+                    </h2>
+                </div>
+
+                <div class="p-4 flex-1 flex flex-col justify-between text-xs space-y-4 overflow-y-auto">
+
+                    <!-- Countdown & Ignition Sequence -->
+                    <div class="space-y-3">
+                        <button id="launchIgnitionBtn" class="w-full bg-space-red hover:bg-red-600 text-white font-bold py-3 rounded text-sm tracking-wider shadow-lg transition flex items-center justify-center gap-2 glow-amber">
+                            ENGINE IGNITION / LIFTOFF
+                        </button>
+
+                        <button id="stageReleaseBtn" class="w-full bg-space-amber hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded text-xs tracking-wider transition">
+                            RELEASE STAGE / SEPARATE
+                        </button>
+
+                        <!-- REFUEL BUTTON -->
+                        <button id="refuelBtn" class="w-full bg-space-cyan hover:bg-cyan-600 text-slate-950 font-bold py-2 rounded text-xs tracking-wider transition">
+                            REFUEL ACTIVE STAGE (100%)
+                        </button>
+
+                        <button id="abortFlightBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-1.5 rounded text-[11px] border border-slate-700">
+                            TERMINATE FLIGHT (ABORT)
+                        </button>
+                    </div>
+
+                    <!-- Throttle Command Console -->
+                    <div class="hud-glass p-3 rounded space-y-2">
+                        <div class="flex justify-between items-center font-bold text-slate-300">
+                            <span>COMMAND THROTTLE</span>
+                            <span id="cmdThrottleVal" class="text-space-cyan">100 %</span>
+                        </div>
+                        <input type="range" id="throttleSlider" min="0" max="100" value="100" class="w-full h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-space-cyan">
+                        <div class="flex justify-between text-[10px] text-slate-400">
+                            <button id="throttleMinBtn" class="px-2 py-0.5 bg-slate-800 rounded border border-slate-700">0%</button>
+                            <button id="throttleHalfBtn" class="px-2 py-0.5 bg-slate-800 rounded border border-slate-700">50%</button>
+                            <button id="throttleMaxBtn" class="px-2 py-0.5 bg-slate-800 rounded border border-slate-700">100%</button>
+                        </div>
+                    </div>
+
+                    <!-- Pitch Guidance Control -->
+                    <div class="hud-glass p-3 rounded space-y-2">
+                        <div class="flex justify-between items-center font-bold text-slate-300">
+                            <span>PITCH ANGLE ATTITUDE</span>
+                            <span id="cmdPitchVal" class="text-space-gold">90° (VERTICAL)</span>
+                        </div>
+                        <input type="range" id="pitchSlider" min="0" max="90" value="90" class="w-full h-1.5 bg-slate-700 rounded appearance-none cursor-pointer accent-space-gold">
+                        <div class="text-[10px] text-slate-400">
+                            Recommended: Maintain 90° until 2km, then pitch down gradually to 0° by 70km.
+                        </div>
+                    </div>
+
+                    <!-- Live Flight Event Log -->
+                    <div class="flex-1 flex flex-col bg-space-bg rounded border border-space-border p-2.5 min-h-[140px] overflow-hidden">
+                        <div class="text-[10px] text-slate-400 font-bold border-b border-space-border pb-1 mb-1">REALTIME LAUNCH EVENT LOG</div>
+                        <div id="simLogConsole" class="flex-1 overflow-y-auto space-y-1 font-mono text-[10px] text-slate-300">
+                            <div><span class="text-slate-500">[00:00]</span> <span class="text-space-cyan">SYS_INIT:</span> Vehicle standing on Pad 39A.</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT AEROSPACE SIMULATION ENGINE -->
+    <script>
+        // Physical Constants
+        const G_GRAV = 6.67430e-11;
+        const EARTH_MASS = 5.972e24; // kg
+        const EARTH_RADIUS = 6371000; // meters
+        const SEA_DENSITY = 1.225; // kg/m^3
+        const SCALE_HEIGHT = 8500; // meters
+        const G0 = 9.80665; // m/s^2
+
+        // Component Database Library
+        const COMPONENT_DB = {
+            engines: [
+                { id: 'eng_merlin', name: 'Merlin 1D (RP-1/LOX)', mass: 0.47, thrustSL: 845, thrustVac: 914, ispSL: 282, ispVac: 311, cost: 1.0 },
+                { id: 'eng_raptor', name: 'Raptor 2 (LCH4/LOX)', mass: 1.60, thrustSL: 2250, thrustVac: 2450, ispSL: 327, ispVac: 350, cost: 2.2 },
+                { id: 'eng_rs25', name: 'RS-25 SSME (LH2/LOX)', mass: 3.52, thrustSL: 1860, thrustVac: 2279, ispSL: 366, ispVac: 452, cost: 4.5 },
+                { id: 'eng_rl10', name: 'RL10 Upper Stage (LH2/LOX)', mass: 0.28, thrustSL: 0, thrustVac: 110, ispSL: 100, ispVac: 465, cost: 1.8 }
+            ],
+            tanks: [
+                { id: 'tank_s1_large', name: 'First Stage Heavy Tank', dryMass: 4.5, propMass: 95.0, height: 12.0, radius: 1.8 },
+                { id: 'tank_s1_medium', name: 'First Stage Medium Tank', dryMass: 2.8, propMass: 55.0, height: 8.0, radius: 1.8 },
+                { id: 'tank_s2_upper', name: 'Upper Stage Vacuum Tank', dryMass: 1.2, propMass: 18.0, height: 4.5, radius: 1.5 }
+            ],
+            structure: [
+                { id: 'decoupler_pne', name: 'Pneumatic Stage Decoupler', dryMass: 0.4, height: 0.8, type: 'decoupler' },
+                { id: 'fairing_sat', name: 'Aero Fairing + Satellite Payload (2.5t)', dryMass: 2.5, height: 4.0, type: 'payload' },
+                { id: 'fairing_heavy', name: 'Aero Fairing + Heavy GTO Payload (5.0t)', dryMass: 5.0, height: 5.0, type: 'payload' }
+            ]
+        };
+
+        // Application State
+        const state = {
+            audioEnabled: true,
+            activeTab: 'builder',
+            buildStack: [],
+            cad: {
+                totalMassKg: 0,
+                dryMassKg: 0,
+                propMassKg: 0,
+                thrustSL: 0,
+                thrustVac: 0,
+                twrSL: 0,
+                twrVac: 0,
+                totalDeltav: 0,
+                stages: []
+            },
+            sim: {
+                running: false,
+                destroyed: false,
+                time: 0,
+                x: 0,
+                y: EARTH_RADIUS,
+                vx: 0,
+                vy: 0,
+                pitch: 90,
+                throttle: 1.0,
+                activeStageIdx: 0,
+                stageRemainingPropKg: 0,
+                autoGuidance: false,
+                showOrbitMap: false,
+                alt: 0,
+                downrange: 0,
+                speed: 0,
+                dynamicQ: 0,
+                gForce: 1.0,
+                density: SEA_DENSITY,
+                apoapsis: 0,
+                periapsis: 0,
+                eccentricity: 0
+            }
+        };
+
+        let debrisParticles = [];
+        
+        // Celestial background bodies for realistic sky / space depth
+        const backgroundStars = [];
+        for(let i=0; i<150; i++) {
+            backgroundStars.push({
+                x: Math.random() * 2000 - 1000,
+                y: Math.random() * 2000 - 1000,
+                size: Math.random() * 2 + 0.5,
+                brightness: Math.random()
+            });
+        }
+
+        // Web Audio Engine
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.thrustGain = null;
+                this.thrustNoise = null;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioCtx();
+
+                const bufferSize = this.ctx.sampleRate * 2;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                this.thrustNoise = this.ctx.createBufferSource();
+                this.thrustNoise.buffer = buffer;
+                this.thrustNoise.loop = true;
+
+                this.filter = this.ctx.createBiquadFilter();
+                this.filter.type = 'lowpass';
+                this.filter.frequency.setValueAtTime(800, this.ctx.currentTime);
+
+                this.thrustGain = this.ctx.createGain();
+                this.thrustGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+
+                this.thrustNoise.connect(this.filter);
+                this.filter.connect(this.thrustGain);
+                this.thrustGain.connect(this.ctx.destination);
+                this.thrustNoise.start();
+            }
+
+            setThrustVolume(vol, altMeters) {
+                if (!state.audioEnabled || !this.ctx) return;
+                const atmRatio = Math.exp(-altMeters / SCALE_HEIGHT);
+                const targetVol = vol * (0.1 + 0.9 * atmRatio);
+                this.thrustGain.gain.setTargetAtTime(targetVol * 0.2, this.ctx.currentTime, 0.05);
+            }
+
+            playPop() {
+                if (!state.audioEnabled || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+
+            playExplosion() {
+                if (!state.audioEnabled || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(90, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(15, this.ctx.currentTime + 1.0);
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.0);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 1.0);
+            }
+        }
+
+        const soundEngine = new SoundEngine();
+
+        const builderCanvas = document.getElementById('builderCanvas');
+        const builderCtx = builderCanvas.getContext('2d');
+        const simCanvas = document.getElementById('simCanvas');
+        const simCtx = simCanvas.getContext('2d');
+        const navCanvas = document.getElementById('navBallCanvas');
+        const navCtx = navCanvas.getContext('2d');
+
+        function resizeCanvases() {
+            builderCanvas.width = builderCanvas.parentElement.clientWidth;
+            builderCanvas.height = builderCanvas.parentElement.clientHeight;
+            simCanvas.width = simCanvas.parentElement.clientWidth;
+            simCanvas.height = simCanvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvases);
+
+        function initPalette() {
+            const engContainer = document.getElementById('enginePalette');
+            engContainer.innerHTML = '';
+            COMPONENT_DB.engines.forEach(eng => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full bg-slate-900 hover:bg-slate-800 border border-space-border p-2 rounded text-left flex justify-between items-center';
+                btn.onclick = () => addComponentToStack({ type: 'engine', data: eng });
+                btn.innerHTML = `<div><div class="font-bold text-space-cyan">${eng.name}</div><div class="text-[9px] text-slate-400">Thrust: ${eng.thrustVac}kN</div></div><span class="text-slate-500 font-bold">+</span>`;
+                engContainer.appendChild(btn);
+            });
+
+            const tankContainer = document.getElementById('tankPalette');
+            tankContainer.innerHTML = '';
+            COMPONENT_DB.tanks.forEach(tank => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full bg-slate-900 hover:bg-slate-800 border border-space-border p-2 rounded text-left flex justify-between items-center';
+                btn.onclick = () => addComponentToStack({ type: 'tank', data: tank });
+                btn.innerHTML = `<div><div class="font-bold text-slate-200">${tank.name}</div><div class="text-[9px] text-space-gold">Propellant: ${tank.propMass}t</div></div><span class="text-slate-500 font-bold">+</span>`;
+                tankContainer.appendChild(btn);
+            });
+
+            const structContainer = document.getElementById('structurePalette');
+            structContainer.innerHTML = '';
+            COMPONENT_DB.structure.forEach(struct => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full bg-slate-900 hover:bg-slate-800 border border-space-border p-2 rounded text-left flex justify-between items-center';
+                btn.onclick = () => addComponentToStack({ type: 'structure', data: struct });
+                btn.innerHTML = `<div><div class="font-bold text-space-green">${struct.name}</div><div class="text-[9px] text-slate-400">Mass: ${struct.dryMass}t</div></div><span class="text-slate-500 font-bold">+</span>`;
+                structContainer.appendChild(btn);
+            });
+        }
+
+        function addComponentToStack(item) {
+            state.buildStack.push({ uid: Date.now() + Math.random(), ...item });
+            recalculateCAD();
+        }
+
+        document.getElementById('clearBuildBtn').onclick = () => {
+            state.buildStack = [];
+            recalculateCAD();
+        };
+
+        document.getElementById('loadPresetBtn').onclick = loadPresetTwoStage;
+
+        function loadPresetTwoStage() {
+            state.buildStack = [
+                { uid: 1, type: 'structure', data: COMPONENT_DB.structure[1] },
+                { uid: 2, type: 'tank', data: COMPONENT_DB.tanks[2] },
+                { uid: 3, type: 'engine', data: COMPONENT_DB.engines[3] },
+                { uid: 4, type: 'structure', data: COMPONENT_DB.structure[0] },
+                { uid: 5, type: 'tank', data: COMPONENT_DB.tanks[0] },
+                { uid: 6, type: 'engine', data: COMPONENT_DB.engines[1] }
+            ];
+            recalculateCAD();
+        }
+
+        function recalculateCAD() {
+            let totalDry = 0;
+            let totalProp = 0;
+            let totalHeight = 0;
+
+            const stages = [];
+            let currentStage = { name: "Stage", dryMass: 0, propMass: 0, thrustSL: 0, thrustVac: 0, ispVac: 320 };
+
+            for (let i = 0; i < state.buildStack.length; i++) {
+                const item = state.buildStack[i];
+                if (item.type === 'engine') {
+                    currentStage.dryMass += item.data.mass;
+                    currentStage.thrustSL += item.data.thrustSL;
+                    currentStage.thrustVac += item.data.thrustVac;
+                    currentStage.ispVac = item.data.ispVac;
+                    totalDry += item.data.mass;
+                } else if (item.type === 'tank') {
+                    currentStage.dryMass += item.data.dryMass;
+                    currentStage.propMass += item.data.propMass;
+                    totalDry += item.data.dryMass;
+                    totalProp += item.data.propMass;
+                    totalHeight += item.data.height;
+                } else if (item.type === 'structure') {
+                    currentStage.dryMass += item.data.dryMass;
+                    totalDry += item.data.dryMass;
+                    totalHeight += item.data.height;
+
+                    if (item.data.type === 'decoupler') {
+                        stages.push(currentStage);
+                        currentStage = { name: "Stage", dryMass: 0, propMass: 0, thrustSL: 0, thrustVac: 0, ispVac: 320 };
+                    }
+                }
+            }
+            stages.push(currentStage);
+
+            let cumulativeMass = (totalDry + totalProp) * 1000;
+            let totalDeltav = 0;
+
+            stages.forEach((stg) => {
+                const m0 = cumulativeMass;
+                const mf = cumulativeMass - (stg.propMass * 1000);
+                let stageDv = 0;
+                if (m0 > 0 && mf > 0 && m0 > mf) {
+                    stageDv = stg.ispVac * G0 * Math.log(m0 / mf);
+                }
+                stg.deltav = stageDv;
+                totalDeltav += stageDv;
+                cumulativeMass -= (stg.dryMass + stg.propMass) * 1000;
+            });
+
+            state.cad.totalMassKg = (totalDry + totalProp) * 1000;
+            state.cad.dryMassKg = totalDry * 1000;
+            state.cad.propMassKg = totalProp * 1000;
+            state.cad.stages = stages;
+            state.cad.totalDeltav = totalDeltav;
+
+            const s1 = stages[stages.length - 1] || { thrustSL: 0, thrustVac: 0 };
+            state.cad.thrustSL = s1.thrustSL;
+            state.cad.thrustVac = s1.thrustVac;
+
+            const weightSL = (state.cad.totalMassKg * G0) / 1000;
+            state.cad.twrSL = weightSL > 0 ? (s1.thrustSL / weightSL) : 0;
+            state.cad.twrVac = weightSL > 0 ? (s1.thrustVac / weightSL) : 0;
+
+            document.getElementById('cadTotalMass').innerText = `${(state.cad.totalMassKg / 1000).toFixed(1)} metric tons`;
+            document.getElementById('cadDryMass').innerText = `${(state.cad.dryMassKg / 1000).toFixed(1)} t`;
+            document.getElementById('cadPropMass').innerText = `${(state.cad.propMassKg / 1000).toFixed(1)} t`;
+            document.getElementById('cadWetDryRatio').innerText = state.cad.dryMassKg > 0 ? (state.cad.totalMassKg / state.cad.dryMassKg).toFixed(2) : '1.00';
+
+            document.getElementById('cadThrustSL').innerText = `${s1.thrustSL} kN`;
+            document.getElementById('cadTwrSL').innerText = state.cad.twrSL.toFixed(2);
+            document.getElementById('cadTwrVac').innerText = state.cad.twrVac.toFixed(2);
+            document.getElementById('cadTotalDeltav').innerText = `${Math.round(totalDeltav)} m/s`;
+
+            const twrBadge = document.getElementById('cadTwrStatus');
+            if (state.cad.twrSL >= 1.2) {
+                twrBadge.innerText = 'TWR NOMINAL (>1.2)';
+                twrBadge.className = 'text-space-green font-bold';
+            } else if (state.cad.twrSL >= 1.0) {
+                twrBadge.innerText = 'MARGINAL TWR (1.0 - 1.2)';
+                twrBadge.className = 'text-space-amber font-bold';
+            } else {
+                twrBadge.innerText = 'TWR < 1.0 (NO LIFTOFF)';
+                twrBadge.className = 'text-space-red font-bold';
+            }
+
+            document.getElementById('cadStackHeight').innerText = `STACK HEIGHT: ${totalHeight.toFixed(1)} m`;
+
+            const bdContainer = document.getElementById('cadStageBreakdown');
+            bdContainer.innerHTML = '';
+            stages.forEach((stg, i) => {
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center text-[11px] bg-slate-900/60 p-1.5 rounded border border-space-border';
+                row.innerHTML = `<span class="text-slate-400 font-bold">Stage ${stages.length - i}:</span><span class="text-slate-200">${stg.thrustVac} kN</span><span class="text-space-green font-bold">Δv ${Math.round(stg.deltav)} m/s</span>`;
+                bdContainer.appendChild(row);
+            });
+        }
+
+        function renderBuilderCanvas() {
+            const w = builderCanvas.width;
+            const h = builderCanvas.height;
+            builderCtx.clearRect(0, 0, w, h);
+
+            builderCtx.strokeStyle = '#1A2332';
+            builderCtx.lineWidth = 1;
+            for (let x = 0; x < w; x += 30) {
+                builderCtx.beginPath(); builderCtx.moveTo(x, 0); builderCtx.lineTo(x, h); builderCtx.stroke();
+            }
+            for (let y = 0; y < h; y += 30) {
+                builderCtx.beginPath(); builderCtx.moveTo(0, y); builderCtx.lineTo(w, y); builderCtx.stroke();
+            }
+
+            const cx = w / 2;
+            let currentY = h - 80;
+
+            if (state.buildStack.length === 0) {
+                builderCtx.fillStyle = '#475569';
+                builderCtx.font = '14px monospace';
+                builderCtx.textAlign = 'center';
+                builderCtx.fillText('CAD ASSEMBLY CANVAS EMPTY - ADD COMPONENTS FROM LEFT PALETTE', cx, h / 2);
+                return;
+            }
+
+            for (let i = state.buildStack.length - 1; i >= 0; i--) {
+                const item = state.buildStack[i];
+                let compHeight = 40;
+                let compWidth = 60;
+
+                if (item.type === 'tank') {
+                    compHeight = item.data.height * 6;
+                    compWidth = item.data.radius * 24;
+                }
+
+                builderCtx.fillStyle = item.type === 'engine' ? '#0284C7' : (item.type === 'tank' ? '#334155' : '#059669');
+                builderCtx.strokeStyle = '#38BDF8';
+                builderCtx.lineWidth = 1.5;
+
+                const rx = cx - compWidth / 2;
+                const ry = currentY - compHeight;
+
+                builderCtx.fillRect(rx, ry, compWidth, compHeight);
+                builderCtx.strokeRect(rx, ry, compWidth, compHeight);
+
+                builderCtx.fillStyle = '#FFFFFF';
+                builderCtx.font = '10px monospace';
+                builderCtx.textAlign = 'center';
+                builderCtx.fillText(item.data.name, cx, ry + compHeight / 2 + 3);
+
+                currentY -= compHeight + 4;
+            }
+        }
+
+        document.getElementById('proceedToLaunchBtn').onclick = switchToLaunchTab;
+        document.getElementById('tabBuilderBtn').onclick = switchToBuilderTab;
+        document.getElementById('tabLaunchBtn').onclick = switchToLaunchTab;
+
+        function switchToBuilderTab() {
+            state.activeTab = 'builder';
+            document.getElementById('builderView').classList.remove('hidden');
+            document.getElementById('launchView').classList.add('hidden');
+            document.getElementById('tabBuilderBtn').className = 'px-3 py-1 rounded text-xs font-bold bg-space-accent/20 text-space-cyan border border-space-accent/50 transition';
+            document.getElementById('tabLaunchBtn').className = 'px-3 py-1 rounded text-xs text-slate-400 hover:text-white transition border border-transparent';
+        }
+
+        function switchToLaunchTab() {
+            if (state.buildStack.length === 0) {
+                loadPresetTwoStage();
+            }
+            state.activeTab = 'launch';
+            document.getElementById('builderView').classList.add('hidden');
+            document.getElementById('launchView').classList.remove('hidden');
+            document.getElementById('tabLaunchBtn').className = 'px-3 py-1 rounded text-xs font-bold bg-space-accent/20 text-space-cyan border border-space-accent/50 transition';
+            document.getElementById('tabBuilderBtn').className = 'px-3 py-1 rounded text-xs text-slate-400 hover:text-white transition border border-transparent';
+            
+            resetLaunchSimulation();
+            resizeCanvases();
+        }
+
+        function resetLaunchSimulation() {
+            state.sim.running = false;
+            state.sim.destroyed = false;
+            state.sim.time = 0;
+            state.sim.x = 0;
+            state.sim.y = EARTH_RADIUS;
+            state.sim.vx = 0;
+            state.sim.vy = 0;
+            state.sim.pitch = 90;
+            state.sim.throttle = 1.0;
+            state.sim.activeStageIdx = state.cad.stages.length - 1;
+            
+            const initStage = state.cad.stages[state.sim.activeStageIdx] || { propMass: 0 };
+            state.sim.stageRemainingPropKg = initStage.propMass * 1000;
+            debrisParticles = [];
+
+            logSimEvent('VEHICLE MOUNTED ON PAD 39A. ALL SYSTEMS GO.', 'sys');
+        }
+
+        // Ignition Controls
+        document.getElementById('launchIgnitionBtn').onclick = () => {
+            if (state.sim.destroyed) return;
+            if (state.cad.twrSL < 1.0) {
+                logSimEvent('LIFTOFF ABORTED: Thrust-to-Weight Ratio < 1.0!', 'error');
+                return;
+            }
+            soundEngine.init();
+            state.sim.running = true;
+            document.getElementById('simPhaseText').innerText = "POWERED FLIGHT";
+            logSimEvent('ENGINE IGNITION! LIFTOFF CONFIRMED!', 'success');
+        };
+
+        document.getElementById('stageReleaseBtn').onclick = triggerStageSeparation;
+
+        function triggerStageSeparation() {
+            if (!state.sim.running || state.sim.destroyed) return;
+            if (state.sim.activeStageIdx > 0) {
+                soundEngine.playPop();
+                state.sim.activeStageIdx--;
+                const nextStg = state.cad.stages[state.sim.activeStageIdx];
+                state.sim.stageRemainingPropKg = nextStg ? nextStg.propMass * 1000 : 0;
+                logSimEvent(`STAGE SEPARATION CONFIRMED. Active Stage: ${state.cad.stages.length - state.sim.activeStageIdx}`, 'warn');
+            } else {
+                logSimEvent('FINAL STAGE ALREADY ACTIVE.', 'warn');
+            }
+        }
+
+        // REFUEL SYSTEM BUTTON FUNCTION
+        document.getElementById('refuelBtn').onclick = () => {
+            if (state.sim.destroyed) return;
+            const curStage = state.cad.stages[state.sim.activeStageIdx];
+            if (curStage) {
+                state.sim.stageRemainingPropKg = curStage.propMass * 1000;
+                logSimEvent('MISSION CONTROL: Active stage propellant tanks fully refueled (100%).', 'success');
+            }
+        };
+
+        document.getElementById('abortFlightBtn').onclick = () => {
+            if (state.sim.destroyed) return;
+            state.sim.running = false;
+            state.sim.destroyed = true;
+            state.sim.throttle = 0;
+            soundEngine.setThrustVolume(0, state.sim.alt);
+            soundEngine.playExplosion();
+
+            for (let i = 0; i < 80; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let speed = Math.random() * 12 + 2;
+                debrisParticles.push({
+                    x: simCanvas.width / 2,
+                    y: simCanvas.height / 2,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12,
+                    size: Math.random() * 8 + 3,
+                    color: Math.random() > 0.4 ? '#f97316' : '#ef4444',
+                    alpha: 1.0,
+                    decay: Math.random() * 0.015 + 0.005
+                });
+            }
+
+            document.getElementById('simPhaseText').innerText = "DESTROYED";
+            logSimEvent('🚨 RANGE SAFETY: Flight Termination System (FTS) Activated!', 'error');
+        };
+
+        // Throttle Preset Quick Buttons
+        document.getElementById('throttleMinBtn').onclick = () => { setThrottle(0); };
+        document.getElementById('throttleHalfBtn').onclick = () => { setThrottle(50); };
+        document.getElementById('throttleMaxBtn').onclick = () => { setThrottle(100); };
+
+        function setThrottle(val) {
+            document.getElementById('throttleSlider').value = val;
+            state.sim.throttle = val / 100.0;
+            document.getElementById('cmdThrottleVal').innerText = `${val} %`;
+        }
+
+        document.getElementById('throttleSlider').addEventListener('input', (e) => {
+            setThrottle(e.target.value);
+        });
+
+        document.getElementById('pitchSlider').addEventListener('input', (e) => {
+            state.sim.pitch = parseFloat(e.target.value);
+            document.getElementById('cmdPitchVal').innerText = `${state.sim.pitch}°`;
+        });
+
+        document.getElementById('autoGuidanceBtn').onclick = () => {
+            state.sim.autoGuidance = !state.sim.autoGuidance;
+            document.getElementById('autoGuidanceBtn').innerText = `AUTO-GUIDANCE: ${state.sim.autoGuidance ? 'ON' : 'OFF'}`;
+            document.getElementById('autoGuidanceBtn').className = state.sim.autoGuidance ? 
+                'px-3 py-1.5 bg-space-green/20 border border-space-green rounded text-xs text-space-green font-bold shadow' :
+                'px-3 py-1.5 bg-space-panel border border-space-border hover:border-space-green rounded text-xs text-space-green font-bold shadow';
+        };
+
+        document.getElementById('toggleOrbitMapBtn').onclick = () => {
+            state.sim.showOrbitMap = !state.sim.showOrbitMap;
+        };
+
+        function logSimEvent(msg, type = 'info') {
+            const consoleBox = document.getElementById('simLogConsole');
+            const line = document.createElement('div');
+            const sec = Math.floor(state.sim.time);
+            let cls = 'text-slate-300';
+            if (type === 'error') cls = 'text-space-red font-bold';
+            if (type === 'warn') cls = 'text-space-amber font-bold';
+            if (type === 'success') cls = 'text-space-green font-bold';
+            if (type === 'sys') cls = 'text-space-cyan';
+
+            line.innerHTML = `<span class="text-slate-500">[${sec < 10 ? '0' + sec : sec}s]</span> <span class="${cls}">${msg}</span>`;
+            consoleBox.appendChild(line);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        function physicsTick(dt) {
+            if (!state.sim.running || state.sim.destroyed) return;
+
+            state.sim.time += dt;
+
+            const r = Math.hypot(state.sim.x, state.sim.y);
+            const alt = r - EARTH_RADIUS;
+            state.sim.alt = alt;
+
+            const density = alt > 120000 ? 0 : SEA_DENSITY * Math.exp(-alt / SCALE_HEIGHT);
+            state.sim.density = density;
+
+            const v = Math.hypot(state.sim.vx, state.sim.vy);
+            state.sim.speed = v;
+
+            const q = 0.5 * density * v * v;
+            state.sim.dynamicQ = q / 1000;
+
+            const curStage = state.cad.stages[state.sim.activeStageIdx] || { thrustSL: 0, thrustVac: 0, ispVac: 320, propMass: 1 };
+            
+            const atmRatio = Math.min(1.0, density / SEA_DENSITY);
+            const baseThrustN = ((curStage.thrustVac * (1 - atmRatio) + curStage.thrustSL * atmRatio) * 1000) * state.sim.throttle;
+            const thrustN = baseThrustN * 1.8;
+
+            if (state.sim.stageRemainingPropKg > 0 && state.sim.throttle > 0) {
+                // FUEL CONSUMPTION FIX: Reduced fuel consumption coefficient to 0.05 so fuel depletes smoothly and realistically over several minutes
+                const mDot = (baseThrustN / (curStage.ispVac * G0)) * 0.05;
+                const fuelUsed = mDot * dt;
+                state.sim.stageRemainingPropKg = Math.max(0, state.sim.stageRemainingPropKg - fuelUsed);
+            } else if (state.sim.stageRemainingPropKg <= 0) {
+                state.sim.throttle = 0;
+            }
+
+            soundEngine.setThrustVolume(state.sim.throttle, alt);
+
+            if (state.sim.autoGuidance) {
+                if (alt < 1500) {
+                    state.sim.pitch = 90;
+                } else if (alt < 70000) {
+                    const progress = (alt - 1500) / (70000 - 1500);
+                    state.sim.pitch = 90 - (progress * 85);
+                } else {
+                    state.sim.pitch = 0;
+                }
+                document.getElementById('pitchSlider').value = state.sim.pitch;
+                document.getElementById('cmdPitchVal').innerText = `${Math.round(state.sim.pitch)}°`;
+            }
+
+            const pitchRad = state.sim.pitch * (Math.PI / 180);
+            const F_thrustX = thrustN * Math.cos(pitchRad);
+            const F_thrustY = thrustN * Math.sin(pitchRad);
+
+            const Cd = 0.3;
+            const Area = 10.0;
+            const F_drag = 0.5 * Cd * Area * density * v * v;
+            const F_dragX = v > 0 ? -F_drag * (state.sim.vx / v) : 0;
+            const F_dragY = v > 0 ? -F_drag * (state.sim.vy / v) : 0;
+
+            const totalVehicleMassKg = state.cad.dryMassKg + state.sim.stageRemainingPropKg;
+            const Fg = (G_GRAV * EARTH_MASS * Math.max(100, totalVehicleMassKg)) / (r * r);
+            const Fg_x = -Fg * (state.sim.x / r);
+            const Fg_y = -Fg * (state.sim.y / r);
+
+            const ax = (F_thrustX + F_dragX + Fg_x) / Math.max(100, totalVehicleMassKg);
+            const ay = (F_thrustY + F_dragY + Fg_y) / Math.max(100, totalVehicleMassKg);
+
+            state.sim.vx += ax * dt;
+            state.sim.vy += ay * dt;
+            state.sim.x += state.sim.vx * dt;
+            state.sim.y += state.sim.vy * dt;
+
+            state.sim.gForce = Math.hypot(ax, ay) / G0;
+
+            const mu = G_GRAV * EARTH_MASS;
+            const specEnergy = (v * v) / 2 - (mu / r);
+            const semiMajorAxis = -mu / (2 * specEnergy);
+
+            if (semiMajorAxis > 0) {
+                const h_ang = state.sim.x * state.sim.vy - state.sim.y * state.sim.vx;
+                const ecc = Math.sqrt(Math.max(0, 1 + (2 * specEnergy * h_ang * h_ang) / (mu * mu)));
+                state.sim.eccentricity = ecc;
+                state.sim.apoapsis = (semiMajorAxis * (1 + ecc) - EARTH_RADIUS) / 1000;
+                state.sim.periapsis = (semiMajorAxis * (1 - ecc) - EARTH_RADIUS) / 1000;
+            }
+
+            document.getElementById('hudAlt').innerText = `${(alt / 1000).toFixed(2)} km`;
+            document.getElementById('hudDownrange').innerText = `${(state.sim.x / 1000).toFixed(2)} km`;
+            document.getElementById('hudVel').innerText = `${Math.round(v)} m/s`;
+            document.getElementById('hudVSpeed').innerText = `${Math.round(state.sim.vy)} m/s`;
+            document.getElementById('hudHSpeed').innerText = `${Math.round(state.sim.vx)} m/s`;
+            
+            document.getElementById('hudDynamicQ').innerText = `${state.sim.dynamicQ.toFixed(1)} kPa`;
+            document.getElementById('hudGForce').innerText = `${state.sim.gForce.toFixed(2)} G`;
+            document.getElementById('hudDensity').innerText = `${density.toFixed(3)} kg/m³`;
+
+            const stagePropMax = (curStage.propMass * 1000) || 1;
+            const fuelPct = Math.max(0, Math.min(100, (state.sim.stageRemainingPropKg / stagePropMax) * 100));
+            document.getElementById('hudStageFuel').innerText = `${fuelPct.toFixed(0)} %`;
+            document.getElementById('hudFuelBar').style.width = `${fuelPct}%`;
+
+            document.getElementById('hudApoapsis').innerText = state.sim.apoapsis > 0 ? `${Math.round(state.sim.apoapsis)} km` : '-- km';
+            document.getElementById('hudPeriapsis').innerText = state.sim.periapsis > 0 ? `${Math.round(state.sim.periapsis)} km` : '-- km';
+            document.getElementById('hudEccentricity').innerText = state.sim.eccentricity.toFixed(3);
+
+            const orbStatus = document.getElementById('hudOrbitStatus');
+            if (state.sim.periapsis > 140) {
+                orbStatus.innerText = 'STABLE ORBIT ACHIEVED';
+                orbStatus.className = 'text-space-green font-bold';
+            } else if (state.sim.apoapsis > 100) {
+                orbStatus.innerText = 'SUBORBITAL TRAJECTORY';
+                orbStatus.className = 'text-space-amber font-bold';
+            } else {
+                orbStatus.innerText = 'ATMOSPHERIC BOUND';
+                orbStatus.className = 'text-space-red font-bold';
+            }
+        }
+
+        function renderSimCanvas() {
+            const w = simCanvas.width;
+            const h = simCanvas.height;
+            simCtx.clearRect(0, 0, w, h);
+
+            if (state.sim.showOrbitMap) {
+                simCtx.fillStyle = '#05070B';
+                simCtx.fillRect(0, 0, w, h);
+
+                const cx = w / 2;
+                const cy = h / 2;
+                const mapScale = 0.00002;
+
+                simCtx.fillStyle = '#0284C7';
+                simCtx.beginPath();
+                simCtx.arc(cx, cy, EARTH_RADIUS * mapScale, 0, Math.PI * 2);
+                simCtx.fill();
+
+                simCtx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+                simCtx.lineWidth = 1.5;
+                simCtx.beginPath();
+                simCtx.arc(cx, cy, (EARTH_RADIUS + 100000) * mapScale, 0, Math.PI * 2);
+                simCtx.stroke();
+
+                const rx = cx + state.sim.x * mapScale;
+                const ry = cy - (state.sim.y - EARTH_RADIUS) * mapScale;
+
+                simCtx.fillStyle = '#10B981';
+                simCtx.beginPath();
+                simCtx.arc(rx, ry, 4, 0, Math.PI * 2);
+                simCtx.fill();
+
+                simCtx.fillStyle = '#CBD5E1';
+                simCtx.font = '10px monospace';
+                simCtx.fillText('VEHICLE', rx + 8, ry + 3);
+
+                return;
+            }
+
+            const alt = state.sim.alt;
+            
+            const skyGrad = simCtx.createLinearGradient(0, 0, 0, h);
+            if (alt < 15000) {
+                skyGrad.addColorStop(0, '#0284C7');
+                skyGrad.addColorStop(1, '#38BDF8');
+            } else if (alt < 80000) {
+                skyGrad.addColorStop(0, '#05070B');
+                skyGrad.addColorStop(1, '#0369A1');
+            } else {
+                skyGrad.addColorStop(0, '#020408');
+                skyGrad.addColorStop(1, '#05070B');
+            }
+            simCtx.fillStyle = skyGrad;
+            simCtx.fillRect(0, 0, w, h);
+
+            // HEAVENLY BODIES & STARS RENDERING
+            if (alt > 20000) {
+                simCtx.save();
+                backgroundStars.forEach(star => {
+                    simCtx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+                    simCtx.fillRect((star.x + state.sim.downrange * 0.05) % w, (star.y - alt * 0.002) % h, star.size, star.size);
+                });
+                simCtx.restore();
+
+                // Render distant planet / moon in space
+                simCtx.fillStyle = '#E2E8F0';
+                simCtx.beginPath();
+                simCtx.arc(w - 120, 100, 35, 0, Math.PI * 2);
+                simCtx.fill();
+                simCtx.fillStyle = 'rgba(0,0,0,0.3)';
+                simCtx.beginPath();
+                simCtx.arc(w - 110, 95, 35, 0, Math.PI * 2);
+                simCtx.fill();
+            }
+
+            if (alt < 5000) {
+                const groundY = h / 2 + (alt * 0.1);
+                simCtx.fillStyle = '#1E293B';
+                simCtx.fillRect(0, groundY, w, h - groundY);
+                simCtx.fillStyle = '#0F172A';
+                simCtx.fillRect(w / 2 - 40, groundY - 15, 80, 15);
+            }
+
+            const rx = w / 2;
+            const ry = h / 2;
+
+            if (!state.sim.destroyed) {
+                simCtx.save();
+                simCtx.translate(rx, ry);
+                simCtx.rotate((-state.sim.pitch + 90) * Math.PI / 180);
+
+                simCtx.fillStyle = '#E2E8F0';
+                simCtx.fillRect(-8, -30, 16, 60);
+
+                simCtx.fillStyle = '#0284C7';
+                simCtx.beginPath();
+                simCtx.moveTo(-8, -30);
+                simCtx.lineTo(0, -48);
+                simCtx.lineTo(8, -30);
+                simCtx.closePath();
+                simCtx.fill();
+
+                if (state.sim.throttle > 0 && state.sim.stageRemainingPropKg > 0) {
+                    const plumeLen = 20 + state.sim.throttle * 40 + Math.random() * 10;
+                    const plumeGrad = simCtx.createLinearGradient(0, 30, 0, 30 + plumeLen);
+                    plumeGrad.addColorStop(0, '#F59E0B');
+                    plumeGrad.addColorStop(0.5, '#EF4444');
+                    plumeGrad.addColorStop(1, 'transparent');
+
+                    simCtx.fillStyle = plumeGrad;
+                    simCtx.beginPath();
+                    simCtx.moveTo(-6, 30);
+                    simCtx.lineTo(0, 30 + plumeLen);
+                    simCtx.lineTo(6, 30);
+                    simCtx.closePath();
+                    simCtx.fill();
+                }
+
+                simCtx.restore();
+            }
+
+            // Render Debris Explosions
+            for (let i = debrisParticles.length - 1; i >= 0; i--) {
+                let p = debrisParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= p.decay;
+
+                if (p.alpha <= 0) {
+                    debrisParticles.splice(i, 1);
+                    continue;
+                }
+
+                simCtx.fillStyle = p.color;
+                simCtx.globalAlpha = p.alpha;
+                simCtx.beginPath();
+                simCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                simCtx.fill();
+                simCtx.globalAlpha = 1.0;
+            }
+
+            renderNavBall();
+        }
+
+        function renderNavBall() {
+            const nw = navCanvas.width;
+            const nh = navCanvas.height;
+            navCtx.clearRect(0, 0, nw, nh);
+
+            const cx = nw / 2;
+            const cy = nh / 2;
+
+            const pitchOffset = (state.sim.pitch - 45) * 0.4;
+            
+            navCtx.fillStyle = '#0369A1';
+            navCtx.fillRect(0, 0, nw, cy - pitchOffset);
+
+            navCtx.fillStyle = '#78350F';
+            navCtx.fillRect(0, cy - pitchOffset, nw, nh);
+
+            navCtx.strokeStyle = '#FFFFFF';
+            navCtx.lineWidth = 1.5;
+            navCtx.beginPath();
+            navCtx.moveTo(0, cy - pitchOffset);
+            navCtx.lineTo(nw, cy - pitchOffset);
+            navCtx.stroke();
+
+            navCtx.strokeStyle = '#10B981';
+            navCtx.lineWidth = 2;
+            navCtx.beginPath();
+            navCtx.arc(cx, cy, 6, 0, Math.PI * 2);
+            navCtx.stroke();
+
+            document.getElementById('navPitchText').innerText = `PITCH: ${Math.round(state.sim.pitch)}°`;
+        }
+
+        let lastTime = performance.now();
+
+        function mainLoop(now) {
+            const dt = Math.min(0.1, (now - lastTime) / 1000);
+            lastTime = now;
+
+            if (state.activeTab === 'builder') {
+                renderBuilderCanvas();
+            } else if (state.activeTab === 'launch') {
+                physicsTick(dt);
+                renderSimCanvas();
+            }
+
+            requestAnimationFrame(mainLoop);
+        }
+
+        document.getElementById('audioToggleBtn').onclick = () => {
+            soundEngine.init();
+            state.audioEnabled = !state.audioEnabled;
+            document.getElementById('audioIcon').style.opacity = state.audioEnabled ? '1' : '0.3';
+        };
+
+        window.onload = () => {
+            initPalette();
+            loadPresetTwoStage();
+            resizeCanvases();
+            requestAnimationFrame(mainLoop);
+        };
+    </script>
+</body>
+</html>

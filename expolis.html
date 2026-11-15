@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXOPOLIS: Beyond Earth — Junior Astronaut Training</title>
+<style>
+:root{
+  --bg:#160b08; --panel:#241110; --panel2:#311814; --line:#5a2d22;
+  --text:#ffe9dd; --dim:#d8a894; --accent:#ff7a45; --good:#57d98a;
+  --warn:#ffd166; --bad:#ff5d5d; --blue:#69b7ff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,sans-serif;background:
+ radial-gradient(1200px 700px at 70% -10%,#4a1d12,transparent),
+ linear-gradient(#1b0d09,#0e0605);color:var(--text);min-height:100vh}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px;
+ background:linear-gradient(90deg,#2a120c,#3a1a10);border-bottom:2px solid var(--line)}
+h1{font-size:19px;margin:0;letter-spacing:.12em;text-transform:uppercase}
+h1 span{color:var(--accent)}
+#statusbar{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.stat{background:#00000055;border:1px solid var(--line);padding:5px 9px;border-radius:8px;font-size:12px}
+.stat b{display:block;font-size:14px}
+nav{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;background:#1d0d09;border-bottom:1px solid var(--line)}
+button,select,input,textarea{font:inherit;color:var(--text)}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 11px;cursor:pointer;transition:.15s}
+button:hover{border-color:var(--accent);transform:translateY(-1px)}
+button.primary{background:linear-gradient(135deg,#a33d18,#7a2810);border-color:#c65a2b}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.tabbtn.active{background:var(--accent);color:#260b04;border-color:var(--accent);font-weight:700}
+main{padding:14px;max-width:1500px;margin:auto}
+.panel{background:linear-gradient(180deg,var(--panel),#1b0c08);border:1px solid var(--line);
+ border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 12px 30px #0008}
+.grid{display:grid;gap:14px}
+.cols{grid-template-columns:2fr 1fr}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+h2{margin:0 0 10px;font-size:16px;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+h3{margin:12px 0 6px;font-size:14px}
+.small{font-size:12px;color:var(--dim)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+canvas{width:100%;border-radius:10px;background:#20100b;border:1px solid var(--line);display:block;touch-action:none}
+.bar{height:9px;background:#0007;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;background:var(--good)}
+.bar.warn i{background:var(--warn)} .bar.bad i{background:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px;border-bottom:1px solid #ffffff14;text-align:left}
+th{color:var(--dim);font-weight:600}
+.ok{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+#toast{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:50}
+.toast{background:#2c130c;border:1px solid var(--accent);padding:10px 13px;border-radius:10px;max-width:340px;
+ box-shadow:0 10px 25px #000a;animation:pop .25s ease}
+@keyframes pop{from{opacity:0;transform:translateY(12px)}}
+.hidden{display:none!important}
+.buildcard{border:1px solid var(--line);background:#00000038;border-radius:10px;padding:8px;margin-bottom:8px}
+.badge{font-size:10px;background:#0007;border:1px solid var(--line);padding:2px 6px;border-radius:20px}
+.kbd{font-family:ui-monospace,monospace;background:#0007;padding:1px 5px;border-radius:5px;border:1px solid var(--line)}
+.log{max-height:180px;overflow:auto;font-size:12px}
+.log div{padding:3px 0;border-bottom:1px dashed #ffffff12}
+</style>
+</head>
+<body>
+<header>
+  <h1>EXOPOLIS <span>· Beyond Earth</span></h1>
+  <div id="statusbar"></div>
+</header>
+
+<nav id="tabs">
+  <button class="tabbtn active" data-tab="colony">Colony</button>
+  <button class="tabbtn" data-tab="rover">Rover Lab</button>
+  <button class="tabbtn" data-tab="orbit">Orbital Planner</button>
+  <button class="tabbtn" data-tab="nav">Navigation</button>
+  <button class="tabbtn" data-tab="dash">Trainee</button>
+  <button class="tabbtn" data-tab="science">Science & Help</button>
+</nav>
+
+<main>
+<!-- COLONY -->
+<section id="tab-colony" class="grid cols">
+  <div>
+    <div class="panel">
+      <div class="row">
+        <h2>Martian Colony</h2>
+        <span class="small" id="clock"></span>
+        <span style="margin-left:auto" class="row">
+          <button id="pauseBtn">⏸ Pause</button>
+          <select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select>
+          <button id="stormBtn" title="Deterministic QA event">Dust Storm Test</button>
+        </span>
+      </div>
+      <canvas id="colonyCanvas" width="960" height="520"></canvas>
+      <div class="small" id="mapHint">Select a structure below, then click an empty tile to construct. Click an existing structure to inspect it.</div>
+    </div>
+    <div class="panel">
+      <h2>Construction & Research</h2>
+      <div class="grid cols">
+        <div id="buildMenu"></div>
+        <div>
+          <h3>Research</h3>
+          <div id="researchMenu"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="panel"><h2>Resources</h2><div id="resourcePanel"></div></div>
+    <div class="panel"><h2>Workforce & Population</h2><div id="popPanel"></div></div>
+    <div class="panel"><h2>Event Log</h2><div class="log" id="eventLog"></div></div>
+    <div class="panel"><h2>History</h2><canvas id="historyCanvas" width="420" height="170"></canvas></div>
+    <div class="panel"><h2>Save / Load</h2>
+      <div class="row">
+        <button id="saveBtn" class="primary">Save</button>
+        <button id="loadBtn">Load</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+      <p class="small">Saves are stored locally in your browser under versioned key <span class="kbd">exopolis.save.v1</span>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ROVER -->
+<section id="tab-rover" class="hidden grid cols">
+  <div class="panel">
+    <h2>Rover Autonomy Lab</h2>
+    <canvas id="roverCanvas" width="900" height="540"></canvas>
+    <div class="row" style="margin-top:8px">
+      <button id="roverRun" class="primary">▶ Run Program</button>
+      <button id="roverStep">Step</button>
+      <button id="roverAuto">A* Auto-Navigate</button>
+      <button id="roverReset">Reset Mission</button>
+      <span class="small" id="roverStatus"></span>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Rover Program</h2>
+    <p class="small">One command per line:</p>
+    <p class="small"><span class="kbd">MOVE n</span> · <span class="kbd">TURN L|R</span> · <span class="kbd">SCAN</span> · <span class="kbd">COLLECT</span> · <span class="kbd">RETURN</span> · <span class="kbd">WAIT n</span></p>
+    <textarea id="roverCode" rows="12" style="width:100%;background:#0007;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px">SCAN
+MOVE 4
+TURN R
+MOVE 3
+SCAN
+COLLECT
+RETURN</textarea>
+    <h3>Sensors</h3><div id="roverSensors" class="small"></div>
+    <h3>Mission Debrief</h3><div id="roverDebrief" class="small">Collect the buried-ice signature and return to base without exhausting the battery.</div>
+  </div>
+</section>
+
+<!-- ORBIT -->
+<section id="tab-orbit" class="hidden grid cols">
+  <div class="panel">
+    <h2>Interplanetary Route Planner</h2>
+    <canvas id="orbitCanvas" width="900" height="520"></canvas>
+    <div class="row" style="margin-top:8px">
+      <label class="small">Epoch day <input id="epoch" type="number" value="0" min="0" style="width:90px"></label>
+      <button id="orbitPlay">▶ Animate</button>
+      <button id="orbitPlan" class="primary">Plan Transfer</button>
+      <button id="orbitLaunch">Launch Cargo</button>
+    </div>
+    <p class="small">Illustrative circular coplanar orbits. Real missions include inclination, launch-window geometry, mid-course corrections and arrival constraints.</p>
+  </div>
+  <div class="panel">
+    <h2>Mission Design</h2>
+    <div id="orbitControls"></div>
+    <div id="orbitResult"></div>
+    <h3>Inbound Cargo</h3><div id="cargoList" class="small">No cargo in transit.</div>
+  </div>
+</section>
+
+<!-- NAV -->
+<section id="tab-nav" class="hidden grid cols">
+  <div class="panel">
+    <h2>Cosmic Navigation Challenge</h2>
+    <canvas id="navCanvas" width="900" height="520"></canvas>
+    <div class="row" style="margin-top:8px">
+      <button id="navObserve" class="primary">Take Star Observation</button>
+      <button id="navSubmit" class="primary">Submit Heading Solution</button>
+      <button id="navReset">New Scenario</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Navigation State</h2>
+    <div id="navReadout"></div>
+    <h3>Reference Stars</h3><div id="starCatalog" class="small"></div>
+    <h3>Debrief</h3><div id="navDebrief" class="small">Use observations to reduce uncertainty, then submit a heading. A star field constrains attitude, not complete absolute position by itself.</div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="tab-dash" class="hidden">
+  <div class="panel"><h2>Trainee Dashboard</h2><div id="dashContent"></div></div>
+</section>
+
+<!-- SCIENCE -->
+<section id="tab-science" class="hidden">
+  <div class="panel"><h2>Science Notes</h2>
+    <p><b>Colony model.</b> Solar output uses Mars’s mean solar irradiance of about 586 W/m², scaled by daylight, panel efficiency, dust accumulation and storms. Battery energy is finite; demand exceeding generation plus usable storage causes prioritised load shedding. [1]</p>
+    <p><b>Atmosphere and life support.</b> Mars’s atmosphere is predominantly CO₂ and contains only about 0.16% O₂, so oxygen must be generated, stored and recycled rather than extracted directly from ambient air. [1][2]</p>
+    <p><b>Orbital mechanics.</b> For circular coplanar orbits, the Hohmann transfer semi-major axis is \(a_t=(r_1+r_2)/2\), transfer time is half the transfer-orbit period, and propellant is estimated with the Tsiolkovsky equation, \( \Delta v = I_{sp}g_0\ln(m_0/m_f) \). This is an educational approximation, not a validated mission-design tool. [11][13]</p>
+    <p><b>Navigation.</b> Star observations primarily estimate spacecraft attitude/heading. Absolute position requires additional information such as ephemerides, range, Doppler, or known landmarks; the game models this distinction explicitly.</p>
+    <p><b>Units.</b> Power: kW. Battery energy: kWh. Water: m³. Oxygen and food: supply units. Materials/parts: tonnes-equivalent. Funds: M₡. Time: Mars sols unless labelled Earth days.</p>
+  </div>
+</section>
+</main>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ---------------- utilities ---------------- */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=(v,d=1)=>Number(v).toFixed(d);
+function toast(msg,type="info"){
+  const d=document.createElement("div");d.className="toast";
+  d.style.borderColor=type==="bad"?"var(--bad)":type==="good"?"var(--good)":"var(--accent)";
+  d.innerHTML=msg;$("#toast").appendChild(d);setTimeout(()=>d.remove(),5200);
+}
+function log(msg,cls=""){
+  const t=document.createElement("div");t.innerHTML=`<b>Sol ${Math.floor(S.sol)}:</b> <span class="${cls}">${msg}</span>`;
+  $("#eventLog").prepend(t);
+  while($("#eventLog").children.length>80)$("#eventLog").lastChild.remove();
+}
+
+/* ---------------- game state ---------------- */
+const SAVE_KEY="exopolis.save.v1";
+const BUILDINGS={
+ habitat:{name:"Habitat",cost:{funds:120,materials:20},time:2,housing:8,power:2,workers:1,desc:"Houses settlers and provides basic life support."},
+ solar:{name:"Solar Array",cost:{funds:80,materials:10},time:1,powerGen:12,workers:0,desc:"Generates power in daylight; output falls with dust."},
+ battery:{name:"Battery Bank",cost:{funds:100,materials:15},time:1,capacity:200,workers:0,desc:"Stores 200 kWh."},
+ extractor:{name:"Water Extractor",cost:{funds:150,materials:30},time:2,power:6,workers:2,water:3,desc:"Extracts and purifies limited local ice."},
+ recycler:{name:"Water Recycler",cost:{funds:130,materials:20},time:2,power:3,workers:1,recycle:0.55,desc:"Recovers a fraction of used water."},
+ oxygen:{name:"Oxygen Generator",cost:{funds:140,materials:25},time:2,power:5,workers:1,oxygen:4,desc:"Produces breathable oxygen from CO₂ feedstock."},
+ greenhouse:{name:"Greenhouse",cost:{funds:160,materials:30},time:3,power:4,workers:2,food:0.8,waterUse:2,desc:"Grows food over multiple sols."},
+ mine:{name:"Regolith Mine",cost:{funds:180,materials:25},time:3,power:6,workers:3,materials:4,desc:"Mines construction material."},
+ lab:{name:"Research Lab",cost:{funds:200,materials:30},time:3,power:4,workers:2,science:0.6,desc:"Generates research points."},
+ iceExtractor:{name:"Ice Extractor",cost:{funds:220,materials:45},time:4,power:8,workers:3,water:7,desc:"High-yield extractor; requires a rover-verified ice deposit.",locked:true}
+};
+const RESEARCH={
+ efficientSolar:{name:"Efficient Solar",cost:40,time:3,desc:"+20% solar efficiency.",req:[]},
+ recycling:{name:"Advanced Recycling",cost:55,time:4,desc:"Recycler recovery +15%.",req:[]},
+ agriculture:{name:"Resilient Crops",cost:60,time:4,desc:"Greenhouses +25% food and lower crop-failure risk.",req:[]},
+ autonomy:{name:"Rover Autonomy",cost:70,time:5,desc:"Rover A* uses 15% less energy.",req:[]},
+ propulsion:{name:"Efficient Propulsion",cost:90,time:6,desc:"Cargo Isp +40 s.",req:["autonomy"]},
+ redundancy:{name:"Life-Support Redundancy",cost:100,time:6,desc:"Reduces failure severity and oxygen leakage.",req:["recycling"]}
+};
+function newState(){
+ return {
+  version:1, sol:0, hour:8, speed:1, paused:false, funds:2200,
+  res:{water:70,oxygen:70,food:70,materials:130,parts:18,science:0},
+  pop:24, health:100, morale:80,
+  buildings:[
+   {type:"habitat",x:4,y:3,level:1,progress:1,eff:1},
+   {type:"solar",x:2,y:2,level:1,progress:1,eff:1},
+   {type:"solar",x:3,y:2,level:1,progress:1,eff:1},
+   {type:"battery",x:6,y:2,level:1,progress:1,eff:1},
+   {type:"extractor",x:7,y:4,level:1,progress:1,eff:1},
+   {type:"oxygen",x:5,y:4,level:1,progress:1,eff:1},
+   {type:"greenhouse",x:3,y:5,level:1,progress:1,eff:1}
+  ],
+  battery:120, dust:0.05, storm:false, stormTimer:0, randomEvents:true,
+  construction:[], research:{}, activeResearch:null, researchProgress:0,
+  iceFound:false, iceExtractorBuilt:false, oxygenFault:false, cargo:[], launchedCargo:false,
+  missions:{m1:"active",m2:"active",m3:"active"}, missionLog:[], scores:{},
+  rover:{found:false,runs:0,collisions:0}, nav:{bestError:999}, history:[]
+ };
+}
+let S=newState();
+let selectedBuild=null, selectedBuilding=null;
+
+/* ---------------- colony simulation ---------------- */
+const DAY=24; // hours represented internally; each tick = 1 hour
+function daylight(){const h=S.hour;return clamp(Math.sin((h-6)/12*Math.PI),0,1);}
+function solarOutput(){
+ let peak=0;S.buildings.forEach(b=>{if(b.type==="solar"&&b.progress>=1)peak+=BUILDINGS.solar.powerGen*b.eff;});
+ const eff=1+(S.research.efficientSolar?0.2:0);
+ return peak*0.586*eff*daylight()*(1-S.dust);
+}
+function buildingActive(b, powered){
+ const def=BUILDINGS[b.type];
+ if(b.progress<1||S.pop<=0)return false;
+ if(def.workers>0&&!powered.workers[b.type])return false;
+ if((def.power||0)>0&&!powered.powered.has(b.id))return false;
+ return true;
+}
+function assignWorkers(){
+ const available=Math.floor(S.pop*0.65);
+ const priority=["oxygen","extractor","greenhouse","mine","lab","recycler","iceExtractor"];
+ const assigned={};let left=available;
+ priority.forEach(t=>{
+  let need=S.buildings.filter(b=>b.type===t&&b.progress>=1).reduce((a,b)=>a+BUILDINGS[t].workers,0);
+  assigned[t]=Math.min(need,left);left-=assigned[t];
+ });
+ return {available,assigned,left};
+}
+function tick(){
+ S.hour++; if(S.hour>=24.6){S.hour-=24.6;S.sol++;dailyUpdate();}
+ const wf=assignWorkers();
+ // power demand and generation
+ let demand=0;const consumers=[];
+ S.buildings.forEach((b,i)=>{b.id=i;const d=BUILDINGS[b.type];
+  if(b.progress>=1&&(d.power||0)>0){demand+=d.power;consumers.push(b);}});
+ const generation=solarOutput();
+ let supply=generation;
+ let batteryUse=0;
+ const powered=new Set();
+ // critical first: oxygen, habitat, extractor
+ const priority=["oxygen","habitat","extractor","recycler","greenhouse","mine","lab","iceExtractor"];
+ priority.forEach(type=>{
+  consumers.filter(b=>b.type===type).forEach(b=>{
+   const need=BUILDINGS[b.type].power;
+   if(supply>=need){supply-=need;powered.add(b.id);}
+   else if(S.battery>need){S.battery-=need;batteryUse+=need;powered.add(b.id);}
+  });
+ });
+ if(generation>demand){S.battery=clamp(S.battery+(generation-demand)*0.9,0,batteryCapacity());}
+ const production={water:0,oxygen:0,food:0,materials:0,science:0};
+ S.buildings.forEach(b=>{
+  const d=BUILDINGS[b.type];
+  if(!buildingActive(b,{workers:wf.assigned,powered}))return;
+  if(d.water)production.water+=d.water*b.eff;
+  if(d.oxygen)production.oxygen+=d.oxygen*b.eff*(S.oxygenFault?0.25:1);
+  if(d.food)production.food+=d.food*b.eff*(S.research.agriculture?1.25:1);
+  if(d.materials)production.materials+=d.materials*b.eff;
+  if(d.science)production.science+=d.science*b.eff;
+ });
+ // consumption
+ const perSettler={water:0.05,food:0.05,oxygen:0.04};
+ let usedWater=S.pop*perSettler.water, usedFood=S.pop*perSettler.food, usedO2=S.pop*perSettler.oxygen;
+ let recycled=0;
+ S.buildings.forEach(b=>{const d=BUILDINGS[b.type];
+  if(b.type==="recycler"&&buildingActive(b,{workers:wf.assigned,powered})){
+   let r=d.recycle+(S.research.recycling?0.15:0);recycled+=usedWater*r;}
+ });
+ production.water+=recycled;
+ S.res.water=clamp(S.res.water+production.water-usedWater,0,9999);
+ S.res.food=clamp(S.res.food+production.food-usedFood,0,9999);
+ S.res.oxygen=clamp(S.res.oxygen+production.oxygen-usedO2,0,9999);
+ S.res.materials=clamp(S.res.materials+production.materials,0,9999);
+ S.res.science+=production.science;
+ // shortages
+ let shortage=[];
+ if(S.res.water<=0){S.health-=0.08;shortage.push("water");}
+ if(S.res.food<=0){S.health-=0.06;S.morale-=0.08;shortage.push("food");}
+ if(S.res.oxygen<=0){S.health-=0.15;shortage.push("oxygen");}
+ if(S.health<55)S.morale-=0.03;
+ S.health=clamp(S.health,0,100);S.morale=clamp(S.morale,0,100);
+ if(S.health<=0&&S.pop>0){S.pop--;S.health=65;log("A settler was lost due to sustained life-support failure.","bad");}
+ // construction
+ S.construction.forEach(c=>{c.remaining-=1/DAY;
+  if(c.remaining<=0){const b={type:c.type,x:c.x,y:c.y,level:1,progress:1,eff:1};S.buildings.push(b);
+   log(`${BUILDINGS[c.type].name} completed.`,"good");
+   if(c.type==="iceExtractor"){S.iceExtractorBuilt=true;checkMissions();}
+  }});
+ S.construction=S.construction.filter(c=>c.remaining>0);
+ // research
+ if(S.activeResearch){S.researchProgress+=1/DAY;
+  if(S.researchProgress>=RESEARCH[S.activeResearch].time){
+   S.research[S.activeResearch]=true;log(`Research complete: ${RESEARCH[S.activeResearch].name}.`,"good");
+   S.activeResearch=null;S.researchProgress=0;}}
+ // events
+ if(S.storm){S.stormTimer-=1/DAY;S.dust=clamp(S.dust+0.004,0,0.85);
+  if(S.stormTimer<=0){S.storm=false;log("Dust storm subsided; solar output recovering.","good");}}
+ else S.dust=clamp(S.dust-0.002,0,1);
+ if(S.randomEvents&&Math.random()<0.0012&&!S.storm)startStorm("An regional dust storm has developed.");
+ if(S.randomEvents&&Math.random()<0.0008&&!S.oxygenFault&&S.buildings.some(b=>b.type==="oxygen")){
+  S.oxygenFault=true;log("Oxygen-generator compressor fault detected. A replacement part is required.","bad");checkMissions();}
+ S.history.push({sol:S.sol,water:S.res.water,oxygen:S.res.oxygen,food:S.res.food,power:generation,battery:S.battery});
+ if(S.history.length>240)S.history.shift();
+ checkMissions();renderColonyUI();
+}
+function batteryCapacity(){return S.buildings.filter(b=>b.type==="battery"&&b.progress>=1).reduce((a,b)=>a+BUILDINGS.battery.capacity,0);}
+function startStorm(reason){S.storm=true;S.stormTimer=3;log(reason+" Solar generation is severely reduced.","warn");toast("⚠ Dust storm: solar output reduced","bad");}
+function dailyUpdate(){
+ // maintenance / operating costs
+ let cost=0;
+ S.buildings.forEach(b=>{cost+=2;if(Math.random()<0.002&&!S.randomEvents)return;});
+ S.funds=Math.max(0,S.funds-cost);
+ if(S.randomEvents&&Math.random()<0.03&&S.res.food>5){
+  S.res.food*=0.9;log("A greenhouse crop batch underperformed; food reserves reduced.","warn");}
+}
+function canAfford(cost){return S.funds>=cost.funds&&S.res.materials>=cost.materials;}
+function pay(cost){S.funds-=cost.funds;S.res.materials-=cost.materials;}
+function startConstruction(type,x,y){
+ const d=BUILDINGS[type];
+ if(d.locked&&!(type==="iceExtractor"&&S.iceFound)){toast("Locked: complete the rover ice-prospecting objective.","bad");return;}
+ if(!canAfford(d.cost)){toast("Insufficient funds or materials.","bad");return;}
+ if(S.buildings.some(b=>b.x===x&&b.y===y)){toast("Tile occupied.","bad");return;}
+ pay(d.cost);S.construction.push({type,x,y,remaining:d.time});
+ log(`Construction started: ${d.name}.`);renderColonyUI();
+}
+
+/* ---------------- colony canvas ---------------- */
+const cc=$("#colonyCanvas"),cx=cc.getContext("2d");
+const TILE=48;
+function drawColony(){
+ const w=cc.width,h=cc.height;
+ const g=cx.createLinearGradient(0,0,0,h);g.addColorStop(0,"#7c2f18");g.addColorStop(.55,"#5d2413");g.addColorStop(1,"#3a160c");
+ cx.fillStyle=g;cx.fillRect(0,0,w,h);
+ // mountains and parallax
+ cx.fillStyle="#4b1d10";
+ for(let i=0;i<8;i++){cx.beginPath();cx.arc(i*150+30,h-130,70+((i*37)%40),Math.PI,0);cx.fill();}
+ cx.fillStyle="#00000030";cx.fillRect(0,h-70,w,70);
+ // stars at night
+ if(daylight()<0.15){cx.fillStyle="#ffffffaa";for(let i=0;i<40;i++){cx.fillRect((i*97)%w,(i*61)%120,1.5,1.5);}}
+ // grid
+ cx.strokeStyle="#ffffff10";
+ for(let x=0;x<=w;x+=TILE){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,h);cx.stroke();}
+ for(let y=0;y<=h;y+=TILE){cx.beginPath();cx.moveTo(0,y);cx.lineTo(w,y);cx.stroke();}
+ // ice deposit
+ if(S.iceFound){cx.fillStyle="#69b7ff55";cx.beginPath();cx.arc(13.5*TILE,8.5*TILE,26,0,7);cx.fill();
+  cx.fillStyle="#bfe4ff";cx.font="12px Inter";cx.fillText("Verified ice",12.2*TILE,8.1*TILE);}
+ // construction sites
+ S.construction.forEach(c=>{
+  cx.fillStyle="#ffd16655";cx.fillRect(c.x*TILE+4,c.y*TILE+4,TILE-8,TILE-8);
+  cx.strokeStyle="#ffd166";cx.strokeRect(c.x*TILE+4,c.y*TILE+4,TILE-8,TILE-8);
+  cx.fillStyle="#ffe9dd";cx.font="10px Inter";cx.fillText(`${Math.ceil(c.remaining)} sol`,c.x*TILE+7,c.y*TILE+28);
+ });
+ // buildings
+ S.buildings.forEach(b=>{
+  const x=b.x*TILE,y=b.y*TILE,d=BUILDINGS[b.type];
+  cx.fillStyle="#00000055";cx.fillRect(x+6,y+TILE-8,TILE-8,6);
+  const colors={habitat:"#c9c2b8",solar:"#3b6ea5",battery:"#4b5563",extractor:"#3a86a8",recycler:"#3a86a8",oxygen:"#66c2a5",greenhouse:"#4f9d55",mine:"#8a6b4a",lab:"#a077c9",iceExtractor:"#5fb8ff"};
+  cx.fillStyle=colors[b.type]||"#888";
+  if(b.type==="solar"){
+   cx.save();cx.translate(x+TILE/2,y+TILE/2);cx.rotate(-0.35);
+   cx.fillRect(-18,-10,36,20);cx.strokeStyle="#a8d3ff";cx.strokeRect(-18,-10,36,20);
+   cx.beginPath();cx.moveTo(-6,-10);cx.lineTo(-6,10);cx.moveTo(6,-10);cx.lineTo(6,10);cx.stroke();cx.restore();
+  }else if(b.type==="greenhouse"){
+   cx.beginPath();cx.moveTo(x+4,y+TILE-6);cx.lineTo(x+TILE/2,y+8);cx.lineTo(x+TILE-4,y+TILE-6);cx.closePath();cx.fill();
+   cx.strokeStyle="#d7ffd9";cx.stroke();
+  }else{cx.fillRect(x+7,y+10,TILE-14,TILE-16);cx.strokeStyle="#00000055";cx.strokeRect(x+7,y+10,TILE-14,TILE-16);}
+  if(b.type==="oxygen"||b.type==="habitat"){cx.fillStyle="#7ef7b0";cx.beginPath();cx.arc(x+TILE-12,y+14,3,0,7);cx.fill();}
+  if(selectedBuilding===b){cx.strokeStyle="var(--accent)";cx.lineWidth=3;cx.strokeRect(x+2,y+2,TILE-4,TILE-4);cx.lineWidth=1;}
+ });
+ // dust particles
+ if(S.dust>0.2){cx.fillStyle=`rgba(255,190,130,${S.dust*0.35})`;
+  for(let i=0;i<80;i++){const x=(i*173+S.sol*40)%w,y=(i*89+S.sol*17)%h;cx.fillRect(x,y,3,2);}}
+}
+cc.addEventListener("click",e=>{
+ const r=cc.getBoundingClientRect();
+ const x=Math.floor((e.clientX-r.left)*(cc.width/r.width)/TILE);
+ const y=Math.floor((e.clientY-r.top)*(cc.height/r.height)/TILE);
+ const b=S.buildings.find(b=>b.x===x&&b.y===y);
+ if(b){selectedBuilding=b;toast(`<b>${BUILDINGS[b.type].name}</b><br>${BUILDINGS[b.type].desc}`);return;}
+ if(selectedBuild)startConstruction(selectedBuild,x,y);
+});
+
+/* ---------------- colony UI ---------------- */
+function renderColonyUI(){
+ const cap=S.buildings.filter(b=>b.type==="habitat"&&b.progress>=1).reduce((a,b)=>a+BUILDINGS.habitat.housing,0);
+ const gen=solarOutput(), dem=S.buildings.filter(b=>b.progress>=1).reduce((a,b)=>a+(BUILDINGS[b.type].power||0),0);
+ const battPct=batteryCapacity()?S.battery/batteryCapacity():0;
+ $("#statusbar").innerHTML=`
+  <div class="stat">Sol<b>${Math.floor(S.sol)}</b></div>
+  <div class="stat">Funds<b>${fmt(S.funds,0)} M₡</b></div>
+  <div class="stat">Population<b>${S.pop}/${cap}</b></div>
+  <div class="stat">Power<b class="${gen>=dem?"ok":"bad"}">${fmt(gen)} / ${fmt(dem)} kW</b></div>
+  <div class="stat">Battery<b class="${battPct>0.25?"ok":"bad"}">${fmt(S.battery,0)} kWh</b></div>
+  <div class="stat">Water<b class="${S.res.water>10?"ok":"bad"}">${fmt(S.res.water)} m³</b></div>
+  <div class="stat">Oxygen<b class="${S.res.oxygen>10?"ok":"bad"}">${fmt(S.res.oxygen)}</b></div>
+  <div class="stat">Food<b class="${S.res.food>10?"ok":"bad"}">${fmt(S.res.food)}</b></div>`;
+ $("#clock").textContent=`Local Mars time ${fmt(S.hour,1)} h · dust ${fmt(S.dust*100,0)}%`;
+ const rows=[["Water",S.res.water,200,"m³"],["Oxygen",S.res.oxygen,200,"units"],["Food",S.res.food,200,"units"],["Materials",S.res.materials,500,"t"],["Spare parts",S.res.parts,100,"units"],["Science",S.res.science,999,"RP"]];
+ $("#resourcePanel").innerHTML=rows.map(([n,v,max,u])=>{
+  const p=clamp(v/max*100,0,100),cls=p<15?"bad":p<35?"warn":"";
+  return `<div style="margin-bottom:9px"><div class="row small"><span>${n}</span><span style="margin-left:auto">${fmt(v)} ${u}</span></div><div class="bar ${cls}"><i style="width:${p}%"></i></div></div>`;
+ }).join("");
+ const wf=assignWorkers();
+ $("#popPanel").innerHTML=`<p class="small">Settlers: <b>${S.pop}</b> · Health <b class="${S.health>60?"ok":"bad"}">${fmt(S.health,0)}%</b> · Morale <b>${fmt(S.morale,0)}%</b></p>
+ <table><tr><th>Role</th><th>Assigned</th><th>Needed</th></tr>
+ ${Object.entries(wf.assigned).map(([k,v])=>`<tr><td>${BUILDINGS[k].name}</td><td>${v}</td><td>${S.buildings.filter(b=>b.type===k&&b.progress>=1).reduce((a,b)=>a+BUILDINGS[k].workers,0)}</td></tr>`).join("")}
+ </table><p class="small">Unassigned skilled workers: ${wf.left}</p>`;
+ $("#buildMenu").innerHTML=Object.entries(BUILDINGS).map(([k,d])=>{
+  const locked=d.locked&&!(k==="iceExtractor"&&S.iceFound);
+  return `<div class="buildcard"><div class="row"><b>${d.name}</b>
+  ${locked?'<span class="badge">Locked</span>':""}
+  <button style="margin-left:auto" class="${selectedBuild===k?"primary":""}" ${locked?"disabled":""} onclick="selectBuild('${k}')">Select</button></div>
+  <div class="small">${d.desc}</div>
+  <div class="small">Cost: ${d.cost.funds} M₡, ${d.cost.materials} materials · ${d.time} sols${d.power?` · ${d.power} kW`:d.powerGen?` · ${d.powerGen} kW peak`:d.capacity?` · ${d.capacity} kWh`:""}</div></div>`;
+ }).join("");
+ $("#researchMenu").innerHTML=Object.entries(RESEARCH).map(([k,r])=>{
+  const done=S.research[k],active=S.activeResearch===k,locked=r.req.some(q=>!S.research[q]);
+  return `<div class="buildcard"><b>${r.name}</b> ${done?'<span class="ok">Complete</span>':active?`<span class="warn">${fmt(S.researchProgress,1)}/${r.time} sols</span>`:""}
+  <div class="small">${r.desc}</div>
+  <button ${done||active||locked||S.res.science<r.cost?"disabled":""} onclick="startResearch('${k}')">Research · ${r.cost} RP</button></div>`;
+ }).join("");
+ drawColony();drawHistory();
+}
+window.selectBuild=k=>{selectedBuild=k;selectedBuilding=null;renderColonyUI();toast(`Selected ${BUILDINGS[k].name}. Click an empty tile.`);};
+window.startResearch=k=>{const r=RESEARCH[k];if(S.res.science<r.cost)return;S.res.science-=r.cost;S.activeResearch=k;S.researchProgress=0;log(`Research started: ${r.name}.`);renderColonyUI();};
+function drawHistory(){
+ const c=$("#historyCanvas"),g=c.getContext("2d");g.clearRect(0,0,c.width,c.height);
+ if(S.history.length<2)return;
+ const keys=[["water","#69b7ff"],["oxygen","#57d98a"],["food","#ffd166"]];
+ keys.forEach(([k,col])=>{
+  g.strokeStyle=col;g.lineWidth=2;g.beginPath();
+  S.history.forEach((h,i)=>{const x=i/(S.history.length-1)*c.width,y=c.height-8-(h[k]/200)*(c.height-16);
+   i?g.lineTo(x,y):g.moveTo(x,y);});
+  g.stroke();
+ });
+ g.fillStyle="#d8a894";g.font="11px Inter";g.fillText("Water · Oxygen · Food reserves",8,14);
+}
+
+/* ---------------- rover lab ---------------- */
+const rc=$("#roverCanvas"),rx=rc.getContext("2d");
+const RG={w:18,h:12,tile:50};
+let rover={x:1,y:10,dir:0,battery:100,samples:0,path:[],program:[],pc:0,running:false,ice:{x:14,y:3},obstacles:[]};
+function resetRover(){
+ rover={x:1,y:10,dir:0,battery:100,samples:0,path:[],program:[],pc:0,running:false,ice:{x:14,y:3},obstacles:[]};
+ rover.obstacles=[[4,8],[5,8],[6,8],[8,4],[8,5],[8,6],[11,7],[12,7],[13,7],[6,3],[7,3],[10,10],[11,10]];
+ S.rover.found=false;$("#roverDebrief").textContent="Collect the buried-ice signature and return to base without exhausting the battery.";
+ drawRover();updateRoverUI();
+}
+function drawRover(){
+ const w=rc.width,h=rc.height;rx.clearRect(0,0,w,h);
+ const g=rx.createLinearGradient(0,0,0,h);g.addColorStop(0,"#8a3520");g.addColorStop(1,"#48190d");
+ rx.fillStyle=g;rx.fillRect(0,0,w,h);
+ for(let x=0;x<=RG.w;x++){rx.strokeStyle="#ffffff10";rx.beginPath();rx.moveTo(x*RG.tile,0);rx.lineTo(x*RG.tile,h);rx.stroke();}
+ for(let y=0;y<=RG.h;y++){rx.strokeStyle="#ffffff10";rx.beginPath();rx.moveTo(0,y*RG.tile);rx.lineTo(w,y*RG.tile);rx.stroke();}
+ rover.obstacles.forEach(([x,y])=>{rx.fillStyle="#5b2b18";rx.beginPath();rx.arc(x*RG.tile+25,y*RG.tile+25,16,0,7);rx.fill();
+  rx.fillStyle="#7c3f24";rx.beginPath();rx.arc(x*RG.tile+20,y*RG.tile+20,7,0,7);rx.fill();});
+ rx.fillStyle="#69b7ff";rx.beginPath();rx.arc(rover.ice.x*RG.tile+25,rover.ice.y*RG.tile+25,14,0,7);rx.fill();
+ rx.fillStyle="#dff2ff";rx.font="11px Inter";rx.fillText("ICE",rover.ice.x*RG.tile+16,rover.ice.y*RG.tile+29);
+ rx.fillStyle="#57d98a";rx.fillRect(rover.x*RG.tile+13,rover.y*RG.tile+13,24,24);
+ rx.fillStyle="#0b3b22";rx.font="12px Inter";rx.fillText("R",rover.x*RG.tile+22,rover.y*RG.tile+30);
+ if(rover.path.length){rx.strokeStyle="#ffffff70";rx.setLineDash([5,5]);rx.beginPath();
+  rover.path.forEach((p,i)=>{const X=p[0]*RG.tile+25,Y=p[1]*RG.tile+25;i?rx.lineTo(X,Y):rx.moveTo(X,Y);});rx.stroke();rx.setLineDash([]);}
+}
+function parseProgram(){
+ const lines=$("#roverCode").value.split("\n").map(s=>s.trim()).filter(Boolean);
+ rover.program=lines;rover.pc=0;rover.running=true;
+}
+function roverForward(){
+ const dx=[1,0,-1,0][rover.dir],dy=[0,1,0,-1][rover.dir];
+ const nx=rover.x+dx,ny=rover.y+dy;
+ const cost=S.research.autonomy?0.85:1;
+ if(nx<0||ny<0||nx>=RG.w||ny>=RG.h||rover.obstacles.some(o=>o[0]===nx&&o[1]===ny)){
+  S.rover.collisions++;log("Rover collision avoided at terrain boundary or obstacle.","warn");return;}
+ if(rover.battery<1.5*cost){log("Rover battery too low to move.","bad");rover.running=false;return;}
+ rover.x=nx;rover.y=ny;rover.battery-=1.5*cost;
+}
+function roverStepCommand(){
+ if(!rover.program.length||rover.pc>=rover.program.length){rover.running=false;return;}
+ const cmd=rover.program[rover.pc++].toUpperCase();
+ if(cmd.startsWith("MOVE"))roverForward();
+ else if(cmd==="TURN L")rover.dir=(rover.dir+3)%4;
+ else if(cmd==="TURN R")rover.dir=(rover.dir+1)%4;
+ else if(cmd==="SCAN"){const d=Math.hypot(rover.x-rover.ice.x,rover.y-rover.ice.y);
+  if(d<2.5)log("SPECTROMETER: strong subsurface ice signature nearby.","good");
+  else log(`SCAN: no strong ice signature. Distance estimate ${fmt(d)} tiles.`);}
+ else if(cmd==="COLLECT"){
+  if(Math.hypot(rover.x-rover.ice.x,rover.y-rover.ice.y)<1.6){
+   rover.samples++;S.iceFound=true;S.rover.found=true;
+   log("Ice deposit verified. Colony map updated; extraction infrastructure is still required.","good");
+   toast("🧪 Ice deposit verified — Ice Extractor unlocked","good");checkMissions();
+  }else log("COLLECT failed: no verified ice sample at this location.","warn");}
+ else if(cmd==="RETURN"){
+  const p=aStar([rover.x,rover.y],[1,10]);rover.path=p||[];
+  if(p){p.slice(1).forEach(()=>roverForward());log(`Rover returned to base. Battery remaining: ${fmt(rover.battery)}%.`,"good");}
+  else log("No safe return path found.","bad");}
+ else if(cmd.startsWith("WAIT")){/* time cost represented by battery self-discharge */ rover.battery=Math.max(0,rover.battery-0.2);}
+}
+function aStar(start,goal){
+ const key=p=>p[0]+","+p[1];
+ const open=[{p:start,g:0,f:0,parent:null}],seen=new Map();
+ while(open.length){
+  open.sort((a,b)=>a.f-b.f);const cur=open.shift();
+  if(cur.p[0]===goal[0]&&cur.p[1]===goal[1]){
+   const path=[];let n=cur;while(n){path.unshift(n.p);n=n.parent;}return path;}
+  if(seen.has(key(cur.p)))continue;seen.set(key(cur.p),cur.g);
+  [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+   const nx=cur.p[0]+dx,ny=cur.p[1]+dy;
+   if(nx<0||ny<0||nx>=RG.w||ny>=RG.h)return;
+   if(rover.obstacles.some(o=>o[0]===nx&&o[1]===ny))return;
+   const g=cur.g+1,h=Math.abs(goal[0]-nx)+Math.abs(goal[1]-ny);
+   open.push({p:[nx,ny],g,f:g+h,parent:cur});
+  });
+ }
+ return null;
+}
+function updateRoverUI(){
+ $("#roverSensors").innerHTML=`Position: <b>${rover.x},${rover.y}</b><br>Heading: <b>${["E","S","W","N"][rover.dir]}</b><br>Battery: <b class="${rover.battery>25?"ok":"bad"}">${fmt(rover.battery)}%</b><br>Samples: <b>${rover.samples}</b><br>Obstacle encounters: <b>${S.rover.collisions}</b>`;
+ $("#roverStatus").textContent=rover.running?`Executing command ${rover.pc+1}/${rover.program.length}`:"Program idle";
+ drawRover();
+}
+$("#roverRun").onclick=()=>{parseProgram();let guard=0;while(rover.running&&guard++<100)roverStepCommand();updateRoverUI();};
+$("#roverStep").onclick=()=>{if(!rover.program.length||rover.pc>=rover.program.length)parseProgram();roverStepCommand();updateRoverUI();};
+$("#roverAuto").onclick=()=>{
+ const goal=S.iceFound&&rover.samples?[1,10]:[rover.ice.x,rover.ice.y];
+ const p=aStar([rover.x,rover.y],goal);rover.path=p||[];
+ if(!p){toast("No safe path found.","bad");return;}
+ p.slice(1).forEach(()=>roverForward());
+ if(!S.iceFound&&rover.x===rover.ice.x&&rover.y===rover.ice.y){rover.samples++;S.iceFound=true;S.rover.found=true;toast("🧪 Ice deposit verified","good");checkMissions();}
+ log(`A* route executed: ${p.length-1} moves.`);updateRoverUI();checkMissions();
+};
+$("#roverReset").onclick=resetRover;
+
+/* ---------------- orbital planner ---------------- */
+const oc=$("#orbitCanvas"),ox=oc.getContext("2d");
+const AU=1.496e8, MU=1.32712440018e11, G0=9.80665;
+const PLANETS=[
+ {name:"Earth",a:1.0,period:1,phase:0,color:"#69b7ff",r:9},
+ {name:"Mars",a:1.524,period:1.881,phase:1.2,color:"#ff7a45",r:7},
+ {name:"Moon",a:1.00257,period:1,phase:0.7,color:"#cccccc",r:4}
+];
+let orbitAnim=false, planned=null;
+function planetAngle(p,t){return p.phase+2*Math.PI*t/p.period;}
+function planetPos(p,t){const a=p.a*AU;return {x:a*Math.cos(planetAngle(p,t)),y:a*Math.sin(planetAngle(p,t))};}
+function drawOrbit(){
+ ox.clearRect(0,0,oc.width,oc.height);
+ ox.fillStyle="#05070f";ox.fillRect(0,0,oc.width,oc.height);
+ const cxp=oc.width/2,cyp=oc.height/2,scale=210;
+ ox.fillStyle="#ffcc55";ox.beginPath();ox.arc(cxp,cyp,18,0,7);ox.fill();
+ PLANETS.forEach(p=>{
+  ox.strokeStyle=p.color+"44";ox.beginPath();ox.arc(cxp,cyp,p.a*scale,0,7);ox.stroke();
+  const pos=planetPos(p,+$("#epoch").value/365.25);
+  const x=cxp+pos.x/1e8*scale/1.496,y=cyp+pos.y/1e8*scale/1.496;
+  ox.fillStyle=p.color;ox.beginPath();ox.arc(x,y,p.r,0,7);ox.fill();
+  ox.fillStyle="#fff";ox.font="11px Inter";ox.fillText(p.name,x+10,y-8);
+ });
+ if(planned){
+  const e=PLANETS[0],m=PLANETS[1],t=+$("#epoch").value/365.25;
+  const p1=planetPos(e,t),p2=planetPos(m,t);
+  ox.strokeStyle="#57d98a";ox.setLineDash([6,5]);ox.beginPath();
+  ox.moveTo(cxp+p1.x/1e8*scale/1.496,cyp+p1.y/1e8*scale/1.496);
+  ox.lineTo(cxp+p2.x/1e8*scale/1.496,cyp+p2.y/1e8*scale/1.496);ox.stroke();ox.setLineDash([]);
+ }
+}
+function hohmann(r1km,r2km){
+ const a=(r1km+r2km)/2;
+ const T=0.5*Math.sqrt(Math.pow(a,3)/MU)/(60*60*24); // days
+ const v1=Math.sqrt(MU/r1km),v2=Math.sqrt(MU/r2km);
+ const dv1=v1*(Math.sqrt(2*r2km/(r1km+r2km))-1);
+ const dv2=v2*(1-Math.sqrt(2*r1km/(r1km+r2km)));
+ return {a,T,dv1,dv2,total:Math.abs(dv1)+Math.abs(dv2)};
+}
+function renderOrbitControls(){
+ $("#orbitControls").innerHTML=`
+ <label class="small">Payload <input id="payload" type="number" value="4" min="0" style="width:80px"> t</label><br>
+ <label class="small">Dry mass <input id="dry" type="number" value="12" min="1" style="width:80px"> t</label><br>
+ <label class="small">Propellant capacity <input id="prop" type="number" value="18" min="0" style="width:80px"> t</label><br>
+ <label class="small">Isp <input id="isp" type="number" value="${S.research.propulsion?360:320}" min="100" style="width:80px"> s</label>
+ <p class="small">Assumes impulsive burns, circular coplanar heliocentric orbits, and no launch-vehicle losses.</p>`;
+}
+$("#orbitPlan").onclick=()=>{
+ const r1=1.0*AU,r2=1.524*AU;
+ const h=hohmann(r1,r2);
+ const payload=+$("#payload").value,dry=+$("#dry").value,propCap=+$("#prop").value,isp=+$("#isp").value;
+ const mFinal=dry+payload;
+ const m0=mFinal*Math.exp(h.total/(isp*G0));
+ const propNeeded=m0-mFinal;
+ const feasible=propNeeded<=propCap;
+ planned={...h,payload,propNeeded,feasible};
+ const phase=planetAngle(PLANETS[1],+$("#epoch").value/365.25)-planetAngle(PLANETS[0],+$("#epoch").value/365.25);
+ const ideal=180-360*h.T/365.25/PLANETS[1].period;
+ const phaseErr=((phase-ideal)%360+540)%360-180;
+ $("#orbitResult").innerHTML=`<table>
+ <tr><th>Transfer time</th><td>${fmt(h.T,0)} Earth days</td></tr>
+ <tr><th>Departure Δv</th><td>${fmt(h.dv1,2)} km/s</td></tr>
+ <tr><th>Arrival Δv</th><td>${fmt(h.dv2,2)} km/s</td></tr>
+ <tr><th>Total Δv</th><td>${fmt(h.total,2)} km/s</td></tr>
+ <tr><th>Propellant required</th><td class="${feasible?"ok":"bad"}">${fmt(propNeeded,2)} t / ${propCap} t</td></tr>
+ <tr><th>Phase-angle error</th><td class="${Math.abs(phaseErr)<20?"ok":"warn"}">${fmt(phaseErr,1)}°</td></tr>
+ <tr><th>Feasibility</th><td class="${feasible?"ok":"bad"}">${feasible?"Feasible in simplified model":"Infeasible: propellant capacity exceeded"}</td></tr></table>`;
+ drawOrbit();
+};
+$("#orbitLaunch").onclick=()=>{
+ if(!planned){toast("Plan a transfer first.","bad");return;}
+ if(!planned.feasible){toast("Mission infeasible: reduce payload or increase propellant capacity.","bad");return;}
+ const cost=120+planned.payload*35;
+ if(S.funds<cost){toast("Insufficient mission budget.","bad");return;}
+ S.funds-=cost;
+ const arrivalSol=S.sol+planned.T/1.0275; // Earth days converted approximately to Mars sols
+ S.cargo.push({arrivalSol,parts:planned.payload,label:`Replacement parts / equipment (${planned.payload} t)`});
+ S.launchedCargo=true;
+ log(`Cargo launched toward Mars. Arrival projected Sol ${Math.floor(arrivalSol)}.`,"good");
+ toast("🚀 Cargo mission launched","good");checkMissions();renderCargo();
+};
+function renderCargo(){
+ $("#cargoList").innerHTML=S.cargo.length?S.cargo.map(c=>`<div>In transit: ${c.label} — arrives Sol ${Math.floor(c.arrivalSol)}</div>`).join(""):"No cargo in transit.";
+}
+$("#orbitPlay").onclick=()=>{orbitAnim=!orbitAnim;};
+setInterval(()=>{if(orbitAnim){$("#epoch").value=+$("#epoch").value+2;drawOrbit();}},80);
+
+/* ---------------- navigation lab ---------------- */
+const nc=$("#navCanvas"),nx=nc.getContext("2d");
+const STARS=[{n:"Aquila-α",ra:30},{n:"Lyra-α",ra:95},{n:"Cygnus-α",ra:160},{n:"Bootes-α",ra:230},{n:"Orion-α",ra:305}];
+let nav={trueHeading:0,estimate:0,uncertainty:35,observations:[],target:0,noise:8};
+function newNavScenario(){
+ nav.trueHeading=Math.random()*360;nav.target=(nav.trueHeading+180+Math.random()*60)%360;
+ nav.estimate=nav.trueHeading+30;nav.uncertainty=35;nav.observations=[];
+ renderNav();
+}
+function renderNav(){
+ nx.fillStyle="#03040a";nx.fillRect(0,0,nc.width,nc.height);
+ for(let i=0;i<180;i++){const x=(i*211)%nc.width,y=(i*137)%nc.height;
+  nx.fillStyle=`rgba(255,255,255,${0.2+((i*37)%60)/100})`;nx.fillRect(x,y,1.6,1.6);}
+ STARS.forEach((s,i)=>{
+  const a=(s.ra-nav.trueHeading)*Math.PI/180;
+  const x=nc.width/2+Math.cos(a)*260,y=nc.height/2+Math.sin(a)*180;
+  nx.fillStyle="#ffe9a8";nx.beginPath();nx.arc(x,y,5,0,7);nx.fill();
+  nx.fillStyle="#fff";nx.font="11px Inter";nx.fillText(s.n,x+8,y);
+ });
+ // spacecraft
+ nx.save();nx.translate(nc.width/2,nc.height/2);nx.rotate(nav.estimate*Math.PI/180);
+ nx.fillStyle="#69b7ff";nx.beginPath();nx.moveTo(0,-16);nx.lineTo(11,14);nx.lineTo(-11,14);nx.closePath();nx.fill();nx.restore();
+ // target
+ const ta=(nav.target-nav.trueHeading)*Math.PI/180;
+ nx.strokeStyle="#57d98a";nx.setLineDash([5,5]);nx.beginPath();
+ nx.moveTo(nc.width/2,nc.height/2);nx.lineTo(nc.width/2+Math.cos(ta)*300,nc.height/2+Math.sin(ta)*180);nx.stroke();nx.setLineDash([]);
+ $("#navReadout").innerHTML=`<p>Estimated heading: <b>${fmt(((nav.estimate%360)+360)%360,1)}°</b></p>
+ <p>Uncertainty: <b class="${nav.uncertainty<12?"ok":nav.uncertainty<25?"warn":"bad"}">±${fmt(nav.uncertainty,1)}°</b></p>
+ <p>Observations: <b>${nav.observations.length}</b></p>
+ <p class="small">Gyroscope drift and sensor noise cause estimate error to accumulate without celestial updates.</p>`;
+ $("#starCatalog").innerHTML=STARS.map(s=>`<div>${s.n} — catalogue bearing ${s.ra}°</div>`).join("");
+}
+$("#navObserve").onclick=()=>{
+ const measured=STARS[Math.floor(Math.random()*STARS.length)];
+ const error=(Math.random()*2-1)*nav.noise;
+ nav.observations.push({star:measured.n,error});
+ nav.estimate=nav.trueHeading+error;
+ nav.uncertainty=Math.max(3,nav.uncertainty*0.62);
+ log(`Star observation ${measured.n}: attitude update applied; uncertainty reduced.`,"good");
+ renderNav();
+};
+$("#navSubmit").onclick=()=>{
+ const err=Math.abs(((nav.estimate-nav.target)%360+540)%360-180);
+ const safe=err<10&&nav.uncertainty<15;
+ const score=clamp(100-err*3-nav.uncertainty,0,100);
+ S.nav.bestError=Math.min(S.nav.bestError,err);
+ S.missionLog.push({mission:"Navigation solution",headingError:err,uncertainty:nav.uncertainty,score});
+ if(safe){S.missions.m3="complete";toast("🛰️ Safe navigation solution accepted.","good");log("Communications checkpoint reached using celestial attitude fix.","good");}
+ else toast(`Solution rejected: heading error ${fmt(err,1)}°, uncertainty ±${fmt(nav.uncertainty,1)}°.`,"bad");
+ checkMissions();renderDash();renderNav();
+};
+$("#navReset").onclick=newNavScenario;
+
+/* ---------------- missions ---------------- */
+function checkMissions(){
+ // M1
+ if(S.missions.m1==="active"&&S.iceFound&&S.iceExtractorBuilt){
+  S.missions.m1="complete";S.scores.m1=92;
+  S.missionLog.push({mission:"Find the Water",result:"Ice verified and extraction facility operational",score:92});
+  toast("✅ Mission 1 complete: Find the Water","good");log("Mission 1 complete.","good");
+ }
+ // M2
+ if(S.missions.m2==="active"&&S.oxygenFault){
+  const arrived=S.cargo.find(c=>c.arrivalSol<=S.sol&&c.parts>0);
+  if(arrived&&S.res.parts>0){
+   S.res.parts--;S.cargo=S.cargo.filter(c=>c!==arrived);
+   S.oxygenFault=false;S.missions.m2="complete";S.scores.m2=88;
+   S.missionLog.push({mission:"Deliver the Equipment",result:"Replacement part delivered and oxygen generator restored",score:88});
+   toast("✅ Mission 2 complete: oxygen generator repaired","good");log("Replacement part installed; oxygen production restored.","good");
+  }
+ }
+ renderCargo();renderDash();
+}
+function renderDash(){
+ const m=[["m1","Find the Water"],["m2","Deliver the Equipment"],["m3","Lost Beyond Earth"]];
+ $("#dashContent").innerHTML=`<table><tr><th>Campaign mission</th><th>Status</th><th>Score</th></tr>
+ ${m.map(([k,n])=>`<tr><td>${n}</td><td class="${S.missions[k]==="complete"?"ok":"warn"}">${S.missions[k]}</td><td>${S.scores[k]??"—"}</td></tr>`).join("")}</table>
+ <h3>Recorded debriefs</h3>
+ ${S.missionLog.length?S.missionLog.map(l=>`<div class="buildcard"><b>${l.mission}</b><div class="small">${l.result||""}</div><div class="small">Score: ${l.score??"—"}</div></div>`).join(""):"<p class='small'>Complete connected missions to generate debriefs.</p>"}
+ <h3>Training focus</h3><p class="small">${S.nav.bestError<999?`Best navigation heading error: ${fmt(S.nav.bestError,1)}°.`:"Try the Navigation module."} ${S.rover.found?"Rover ice prospecting complete.":"Program the rover to verify subsurface ice."}</p>`;
+}
+
+/* ---------------- save/load ---------------- */
+function save(){
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));toast("Game saved.","good");}
+ catch(e){toast("Save failed: browser storage unavailable.","bad");}
+}
+function load(){
+ try{
+  const raw=localStorage.getItem(SAVE_KEY);if(!raw){toast("No save found.","bad");return;}
+  const data=JSON.parse(raw);
+  if(data.version!==1||typeof data.sol!=="number"||!Array.isArray(data.buildings))throw new Error("invalid");
+  S=data;toast("Save loaded.","good");renderAll();
+ }catch(e){toast("Save data invalid; starting fresh state.","bad");S=newState();renderAll();}
+}
+$("#saveBtn").onclick=save;$("#loadBtn").onclick=load;
+$("#resetBtn").onclick=()=>{if(confirm("Reset all progress?")){S=newState();renderAll();toast("New training session started.");}};
+$("#stormBtn").onclick=()=>startStorm("Deterministic dust-storm test initiated.");
+$("#pauseBtn").onclick=()=>{S.paused=!S.paused;$("#pauseBtn").textContent=S.paused?"▶ Resume":"⏸ Pause";};
+$("#speed").onchange=e=>S.speed=+e.target.value;
+
+/* ---------------- tabs and loop ---------------- */
+$$("#tabs .tabbtn").forEach(b=>b.onclick=()=>{
+ $$("#tabs .tabbtn").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+ ["colony","rover","orbit","nav","dash","science"].forEach(t=>$("#tab-"+t).classList.toggle("hidden",t!==b.dataset.tab));
+ if(b.dataset.tab==="rover")drawRover();
+ if(b.dataset.tab==="orbit"){renderOrbitControls();drawOrbit();renderCargo();}
+ if(b.dataset.tab==="nav")renderNav();
+ if(b.dataset.tab==="dash")renderDash();
+});
+function renderAll(){renderColonyUI();updateRoverUI();renderOrbitControls();drawOrbit();renderCargo();renderNav();renderDash();}
+setInterval(()=>{
+ if(!S.paused){for(let i=0;i<S.speed;i++)tick();}
+},220);
+resetRover();newNavScenario();renderAll();
+log("EXOPOLIS training simulation initialised. Establish resource redundancy before expanding.");
+toast("Welcome, Junior Astronaut. Begin with <b>Find the Water</b>.","good");
+</script>
+</body>
+</html>

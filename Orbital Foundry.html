@@ -1,0 +1,215 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Orbital Foundry</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eaf2fc;--pn:#fff;--ink:#0b2342;--mu:#4b6685;--ln:#a9c2e0;--ac:#0a64e8;--ok:#0f9d58;--bad:#d32f3c;--wr:#c77700;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#050b1c;--pn:#0c1830;--ink:#e8f1ff;--mu:#93aacb;--ln:#223a63;--ac:#4db2ff;--ok:#38d98a;--bad:#ff6470;--wr:#ffb347}}
+:root[data-theme="dark"]{--bg:#050b1c;--pn:#0c1830;--ink:#e8f1ff;--mu:#93aacb;--ln:#223a63;--ac:#4db2ff;--ok:#38d98a;--bad:#ff6470;--wr:#ffb347}
+*{box-sizing:border-box}html{background:var(--bg)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:500 15px/1.5 'Chakra Petch',system-ui,sans-serif}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.25;background:linear-gradient(var(--ln) 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,var(--ln) 1px,transparent 1px) 0 0/32px 32px}
+header{position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;padding:10px 16px;background:var(--pn);border-bottom:2px solid var(--ln)}
+header h1{margin:0;font-size:18px;letter-spacing:.12em;flex:1;cursor:pointer}
+.pill{display:inline-block;padding:3px 12px;border:1px solid var(--ln);border-radius:99px;font-weight:700;margin:2px}
+main{position:relative;max-width:1100px;margin:0 auto;padding:16px}
+.scr{display:none}.scr.on{display:block}
+.btn{font:inherit;font-weight:700;padding:9px 16px;border-radius:10px;border:2px solid var(--ac);background:var(--ac);color:var(--bg);cursor:pointer}
+.btn.g{background:transparent;color:var(--ac)}.btn:disabled{opacity:.4;cursor:not-allowed}
+:is(.btn,.slot,.part,li):focus-visible{outline:3px solid var(--wr);outline-offset:2px}
+.card{background:var(--pn);border:2px solid var(--ln);border-radius:14px;padding:14px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+h2{margin:0 0 8px;font-size:20px}.mu{color:var(--mu);font-size:13px;margin:4px 0 10px}
+.bl{display:grid;grid-template-columns:minmax(220px,330px) 1fr;gap:16px}@media(max-width:760px){.bl{grid-template-columns:1fr}}
+#bp{width:100%;max-height:72vh;background:var(--pn);border:2px solid var(--ln);border-radius:14px}
+.pt *{stroke:var(--ink);stroke-width:.8}
+.slot{fill:transparent;stroke:var(--ac);stroke-dasharray:4 3;cursor:pointer;stroke-width:1.2}
+.slot.sel{stroke-width:2.5;fill:var(--ac);fill-opacity:.18}.slot.done{stroke:none;pointer-events:none}.slot.bad{animation:shk .4s}
+@keyframes shk{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:8px;margin:10px 0}
+.part{font:inherit;font-size:12px;text-align:center;padding:6px;background:var(--pn);color:var(--ink);border:2px solid var(--ln);border-radius:10px;cursor:pointer}
+.part.sel,.part.hint{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac)}.part.hint{animation:pl 1s infinite}@keyframes pl{50%{box-shadow:0 0 0 8px transparent}}
+ol{padding-left:22px;margin:6px 0}li{margin:5px 0;cursor:pointer}li.ok{color:var(--ok);text-decoration:line-through}li.sel{font-weight:700;color:var(--ac)}
+.bar2{height:10px;border-radius:9px;background:var(--ln);overflow:hidden;margin:6px 0}.bar2 i{display:block;height:100%;background:var(--ac);width:0}
+.lk svg{filter:brightness(0)}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:92vw;padding:10px 16px;border-radius:12px;background:var(--ink);color:var(--bg);opacity:0;transition:opacity .25s;z-index:40;pointer-events:none;text-align:center}#toast.on{opacity:1}
+.md{position:fixed;inset:0;display:none;place-items:center;background:#000a;z-index:30}.md.on{display:grid}
+.mb{background:var(--pn);border:2px solid var(--ac);border-radius:16px;padding:22px;max-width:min(92vw,440px);text-align:center}.mb .btn{margin:4px}
+#fl{position:relative;height:min(72vh,620px);border-radius:16px;overflow:hidden;border:2px solid var(--ln)}
+#stars{position:absolute;inset:0;opacity:0;background-image:radial-gradient(#fff 1px,transparent 1.6px),radial-gradient(#fff 1px,transparent 1.6px);background-size:70px 90px,130px 110px;background-position:0 0,35px 45px;animation:fall 2s linear infinite}
+@keyframes fall{to{background-position:0 900px,35px 945px}}
+#pad{position:absolute;left:0;right:0;bottom:0;height:14%;background:linear-gradient(#3b4a63,#222c3d);transition:transform 7s ease-in}
+#rk{position:absolute;left:50%;bottom:11%;height:64%;aspect-ratio:200/420;transform:translateX(-50%)}
+#rk svg{width:100%;height:100%;overflow:visible}
+.fl{transform-origin:0 0;animation:fk .09s infinite alternate}@keyframes fk{to{transform:scaleY(.8)}}
+.dr{transform-box:fill-box;transform-origin:center;transition:transform 2.6s ease-in,opacity 2.6s;transform:translateY(700px) rotate(30deg);opacity:0}
+#hud{position:absolute;left:10px;top:10px;padding:8px 12px;border-radius:10px;background:#050b1ccc;color:#e8f1ff;font:700 13px/1.6 monospace}
+#gz{position:absolute;left:10px;right:10px;bottom:10px;height:30px;border-radius:8px;background:#050b1ccc;border:2px solid #4db2ff}
+#gz b{position:absolute;top:0;bottom:0;background:#38d98a99}#gz i{position:absolute;top:-4px;bottom:-4px;width:4px;background:#fff}
+#cd{position:absolute;inset:0;display:grid;place-items:center;font-size:96px;font-weight:700;color:#fff;text-shadow:0 0 20px #000;pointer-events:none}
+#bm{position:absolute;left:50%;bottom:30%;width:40px;height:40px;margin-left:-20px;border-radius:50%;background:#ffb347;animation:bm 1.2s ease-out forwards}@keyframes bm{to{transform:scale(14);opacity:0}}
+@media(prefers-reduced-motion:reduce){#stars,.fl,.part.hint{animation:none}}
+</style></head><body>
+<header><h1 id="home" tabindex="0">ORBITAL FOUNDRY</h1><span class="pill" id="cr"></span><button class="btn g" id="snb" aria-label="Toggle sound">🔊</button><button class="btn g" id="thb" aria-label="Toggle theme">◐</button></header>
+<main><section class="scr on" id="menu"></section><section class="scr" id="miss"></section><section class="scr" id="build"></section><section class="scr" id="quiz"></section><section class="scr" id="flight"></section><section class="scr" id="codex"></section></main>
+<div id="toast" role="status"></div><div class="md" id="md"></div>
+<script>
+(()=>{'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],H=(s,h)=>{$(s).innerHTML=h};
+const R=a=>a[Math.random()*a.length|0],shuf=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]),cl=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+let S={cr:0,un:['snd'],st:{},cx:{},ac:{},lv:0,bs:0,th:'',mu:0};
+try{Object.assign(S,JSON.parse(localStorage.getItem('foundry')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('foundry',JSON.stringify(S))}catch(e){}};
+// ---- sound ----
+let AX;const snd=(f,d=.12,t='sine',v=.1,w=0)=>{if(S.mu)return;try{AX=AX||new AudioContext();const o=AX.createOscillator(),g=AX.createGain(),n=AX.currentTime+w;o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(AX.destination);o.start(n);o.stop(n+d)}catch(e){}};
+const good=()=>{snd(660,.1,'triangle');snd(880,.15,'triangle',.1,.09)},bad=()=>snd(150,.3,'sawtooth');
+// ---- real parts: name, shape, colour, mass t, liftoff thrust MN, clue, fact ----
+const P={
+nose:['Nose Cone','cone','#e8ebf2',.02,0,'Smooths the airflow and shields what is inside.','Curved ogive shapes cut drag at supersonic speed.'],
+pay:['Instrument Payload','tank','#ffd166',.1,0,'Carries the science experiments.','Sounding rockets fly instruments above the atmosphere for a few minutes.'],
+tank:['Propellant Tank','tank','#cfd6e4',.6,0,'Stores the fuel and oxidizer.','Propellant is often over 85% of a rocket’s liftoff mass.'],
+fins:['Stabilizer Fins','fins','#d9534f',.03,0,'Keeps the rocket flying straight, like arrow feathers.','Fins keep the center of pressure behind the center of mass.'],
+eng:['Rocket Nozzle','engines:1','#7a7f8a',.1,.02,'Turns hot gas into thrust.','A bell-shaped de Laval nozzle lets exhaust expand and push efficiently.'],
+orb:['Orbiter','orbiter','#f1f1ec',78,0,'Carries crew and cargo, then glides home to land.','About 24,000 heat-resistant tiles protected it on reentry.'],
+et:['External Tank','tank','#e8833a',760,0,'Feeds liquid hydrogen and oxygen to the orbiter’s engines.','It was the only major shuttle part that was not reused.'],
+srb:['Solid Rocket Booster','srb','#eceff4',590,12.5,'Adds huge extra thrust for the first two minutes.','Boosters parachuted into the ocean and were reused.'],
+ssme:['Main Engines (RS-25)','engines:3','#8a8f99',10,5.6,'Burns liquid hydrogen and oxygen, throttling as it climbs.','RS-25 engines were reused on NASA’s SLS rocket.'],
+les:['Launch Escape System','les','#f2f2ee',4.2,0,'Pulls the crew capsule away if the rocket fails.','It was never needed on a crewed Apollo launch.'],
+cm:['Command Module','capsule','#c7cbd4',5.8,0,'The crew cabin that returns astronauts to Earth.','It was the only part of the whole stack that came home.'],
+sm:['Service Module','sm','#d8dadf',24.5,0,'Supplies power, air and an engine for course changes.','Its engine fired to leave lunar orbit and head home.'],
+lm:['Lunar Module','lm','#d6b25e',15,0,'Lands two astronauts on the Moon.','It rode inside an adapter below the Command and Service Modules.'],
+iu:['Instrument Unit','ring','#2a2a30',2,0,'The rocket’s brain: guidance and navigation computers.','This ring was less than a meter tall.'],
+s4b:['S-IVB Third Stage','tank','#f4f4f0',119,0,'Restarts in orbit to send the crew toward the Moon.','Its single J-2 engine could relight in space.'],
+s2:['S-II Second Stage','tank','#f4f4f0',480,0,'Five engines carry the stack most of the way to orbit.','It burned liquid hydrogen, the lightest rocket fuel.'],
+s1:['S-IC First Stage','tank','#f4f4f0',2290,0,'Lifts the entire rocket off the pad.','It burned roughly 2,000 tonnes of propellant in about 2.5 minutes.'],
+f1:['F-1 Engine Cluster','engines:5','#7b7f89',8,33.9,'Five giant engines burning kerosene and oxygen.','Each F-1 made about 6.8 MN of thrust.'],
+grid:['Grid Fins','grid','#9aa0aa',.5,0,'Steer a booster as it falls back to land.','Used on Falcon 9 boosters to guide the descent.'],
+sol:['Solar Array','sol','#1c3f7a',.5,0,'Turns sunlight into electricity for satellites and stations.','The ISS has eight huge solar array wings.']};
+const C=[
+{id:'snd',n:'Sounding Rocket',dif:'Rookie · 5 parts',cost:0,m:1,sl:[['nose',82,40,36,50,-1],['pay',82,90,36,60,-1],['tank',82,150,36,100,0],['fins',72,250,56,46,0],['eng',82,296,36,36,0]],
+ ST:[{n:'Motor burn',d:6,g:[.76,.9],alt:100,v:1.4}]},
+{id:'shu',n:'Space Shuttle',dif:'Pilot · 5 parts',cost:150,m:1.5,sl:[['orb',20,90,44,150,-1],['ssme',22,240,40,30,-1],['et',70,50,34,290,1],['srb',110,80,26,230,0],['srb',140,80,26,230,0]],
+ ST:[{n:'Booster burn',d:6,g:[.78,.9],alt:45,v:1.5},{n:'Main engines to cutoff',d:7,g:[.8,.92],alt:300,v:7.7}]},
+{id:'sat',n:'Saturn V',dif:'Commander · 9 parts',cost:400,m:2.5,sl:[['les',92,10,16,52,-1],['cm',87,62,26,30,-1],['sm',85,92,30,34,-1],['lm',82,126,36,40,-1],['iu',82,166,36,8,-1],['s4b',82,174,36,42,2],['s2',82,216,36,72,1],['s1',80,288,40,92,0],['f1',78,380,44,26,0]],
+ ST:[{n:'S-IC first stage',d:6,g:[.78,.9],alt:67,v:2.4},{n:'S-II second stage',d:7,g:[.8,.92],alt:175,v:6.9},{n:'S-IVB translunar burn',d:7,g:[.82,.93],alt:384400,v:10.8}]}];
+const AC=[['first','First Flight'],['perf','Perfect Build'],['s5','Streak ×5'],['cx','Codex 50%'],['moon','Moon Bound']],UP=[120,240,480];
+const D=C[Math.floor(Date.now()/864e5)%C.length];
+// ---- drawing ----
+const SH={
+cone:(w,h,c)=>`<path d="M0 ${h}V${h*.5}Q${w/2} 0 ${w} ${h*.5}V${h}Z" fill="${c}"/>`,
+les:(w,h,c)=>`<path d="M${w/2} 0L${w*.65} ${h*.3}H${w*.35}Z" fill="${c}"/><rect x="${w*.44}" y="${h*.3}" width="${w*.12}" height="${h*.5}" fill="#888"/><path d="M${w*.1} ${h}L${w*.3} ${h*.76}H${w*.7}L${w*.9} ${h}Z" fill="${c}"/>`,
+capsule:(w,h,c)=>`<path d="M${w*.35} 0H${w*.65}L${w} ${h}H0Z" fill="${c}"/><circle cx="${w/2}" cy="${h*.5}" r="${w*.1}" fill="#35516e"/>`,
+tank:(w,h,c)=>`<rect width="${w}" height="${h}" rx="${w*.12}" fill="${c}"/><path d="M0 ${h*.25}H${w}M0 ${h*.75}H${w}" fill="none"/>`,
+sm:(w,h,c)=>`<rect width="${w}" height="${h*.78}" fill="${c}"/><path d="M${w*.3} ${h*.78}L${w*.2} ${h}H${w*.8}L${w*.7} ${h*.78}Z" fill="#666"/><rect x="${w*.1}" y="${h*.2}" width="${w*.8}" height="${h*.12}" fill="#0002"/>`,
+lm:(w,h,c)=>`<path d="M${w*.15} ${h*.7}L0 ${h}M${w*.85} ${h*.7}L${w} ${h}" fill="none"/><rect x="${w*.2}" y="${h*.12}" width="${w*.6}" height="${h*.58}" rx="4" fill="${c}"/>`,
+ring:(w,h)=>`<rect width="${w}" height="${h}" fill="#2a2a30"/><path d="M0 ${h/2}H${w}" stroke-dasharray="3 3" fill="none"/>`,
+engines:(w,h,c,n)=>Array.from({length:n},(_,i)=>{const x=(i+.5)*w/n,k=w/n;return `<path d="M${x-k*.3} 0H${x+k*.3}L${x+k*.45} ${h}H${x-k*.45}Z" fill="${c}"/>`}).join(''),
+srb:(w,h,c)=>`<path d="M0 ${h*.92}V${h*.2}Q${w/2} -${h*.05} ${w} ${h*.2}V${h*.92}Z" fill="${c}"/><path d="M${w*.25} ${h*.92}H${w*.75}L${w*.9} ${h}H${w*.1}Z" fill="#666"/>`,
+fins:(w,h,c)=>`<rect x="${w*.3}" width="${w*.4}" height="${h*.85}" fill="#cfd6e4"/><path d="M${w*.3} ${h*.35}L0 ${h}L${w*.3} ${h*.8}ZM${w*.7} ${h*.35}L${w} ${h}L${w*.7} ${h*.8}Z" fill="${c}"/>`,
+orbiter:(w,h,c)=>`<path d="M${w/2} 0Q${w*.72} ${h*.08} ${w*.72} ${h*.4}L${w} ${h*.88}V${h}H0V${h*.88}L${w*.28} ${h*.4}Q${w*.28} ${h*.08} ${w/2} 0Z" fill="${c}"/><path d="M${w*.4} ${h*.14}H${w*.6}" stroke-width="3" fill="none"/><rect x="${w*.15}" y="${h*.86}" width="${w*.7}" height="${h*.14}" fill="#2a2a30"/>`,
+sol:(w,h,c)=>`<rect y="${h*.25}" width="${w}" height="${h*.5}" fill="${c}"/><path d="M${w/4} ${h*.25}V${h*.75}M${w/2} ${h*.25}V${h*.75}M${w*.75} ${h*.25}V${h*.75}" fill="none"/>`,
+grid:(w,h)=>`<rect width="${w}" height="${h}" fill="#9aa0aa"/><path d="M${w/3} 0V${h}M${w*2/3} 0V${h}M0 ${h/3}H${w}M0 ${h*2/3}H${w}" fill="none"/>`};
+const TS={cone:[40,50],les:[26,70],capsule:[44,44],tank:[40,70],sm:[44,50],lm:[50,50],ring:[64,16],engines:[64,40],srb:[30,80],fins:[56,56],orbiter:[56,80],sol:[70,40],grid:[44,44]};
+const drawP=(k,w,h)=>{const p=P[k],[t,n]=p[1].split(':');return SH[t](w,h,p[2],+n||1)};
+const ico=(k,h=64)=>{const t=P[k][1].split(':')[0],[w,hh]=TS[t];return `<svg class="pt" viewBox="-2 -2 ${w+4} ${hh+4}" style="height:${h}px;width:100%">${drawP(k,w,hh)}</svg>`};
+// ---- ui helpers ----
+const hdr=()=>{$('#cr').textContent='◎ '+S.cr+' cr';$('#snb').textContent=S.mu?'🔇':'🔊'};
+const show=id=>{$$('.scr').forEach(e=>e.classList.toggle('on',e.id===id));hdr();scrollTo(0,0)};
+const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2800)};
+const closeM=()=>$('#md').classList.remove('on');
+const modal=(h,fn)=>{$('#md').innerHTML='<div class="mb" role="dialog" aria-modal="true">'+h+'</div>';$('#md').classList.add('on');for(const k in fn)$('#'+k).onclick=()=>{closeM();fn[k]()}};
+const award=k=>{if(!S.ac[k]){S.ac[k]=1;toast('🏅 Achievement: '+AC.find(a=>a[0]===k)[1]);save()}};
+const stars=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+// ---- menu & missions ----
+function menu(){F=null;const n=Object.keys(S.cx).length;show('menu');
+H('#menu',`<h2>Mission Control</h2><p class="mu">Identify real spacecraft parts, assemble famous rockets, then fly the launch. Daily mission: <b>${D.n}</b> (double credits).</p>
+<div class="grid"><div class="card"><h2>🛠 Build &amp; Launch</h2><p class="mu">Match clues to parts, then stage at the perfect moment.</p><button class="btn" id="m1">Missions</button></div>
+<div class="card"><h2>🔍 Identify</h2><p class="mu">10 timed questions. Streaks earn bonus credits.</p><button class="btn" id="m2">Start quiz</button></div>
+<div class="card"><h2>📖 Codex</h2><p class="mu">${n}/${Object.keys(P).length} parts discovered</p><button class="btn" id="m3">Open</button></div>
+<div class="card"><h2>⚙ Reliability Lab</h2><p class="mu">Level ${S.lv}/3 · safer launches</p><button class="btn g" id="m4" ${S.lv>=3?'disabled':''}>Upgrade (${UP[S.lv]||'max'} cr)</button></div></div>
+<h2 style="margin-top:18px">Achievements</h2><p>${AC.map(a=>`<span class="pill" style="opacity:${S.ac[a[0]]?1:.35}">${a[1]}</span>`).join('')}</p>`);
+$('#m1').onclick=missions;$('#m2').onclick=quiz;$('#m3').onclick=codex;
+$('#m4').onclick=()=>{if(S.cr<UP[S.lv])return toast('Not enough credits.');S.cr-=UP[S.lv++];save();good();menu()}}
+function missions(){show('miss');
+H('#miss',`<h2>Missions</h2><div class="grid">${C.map(c=>{const u=S.un.includes(c.id);return `<div class="card"><h2>${c.n}</h2><p class="mu">${c.dif}${c===D?' · ⭐ DAILY ×2':''}</p><p>${stars(S.st[c.id]||0)}</p><button class="btn" data-c="${c.id}" ${u||S.cr>=c.cost?'':'disabled'}>${u?'Build':'Unlock ('+c.cost+' cr)'}</button></div>`}).join('')}</div><p><button class="btn g" id="bk">Back</button></p>`);
+$('#bk').onclick=menu;$$('[data-c]').forEach(b=>b.onclick=()=>{const c=C.find(x=>x.id===b.dataset.c);if(!S.un.includes(c.id)){S.cr-=c.cost;S.un.push(c.id);save();good();return missions()}openBuild(c)})}
+// ---- build ----
+let B;
+function openBuild(c){const ids=[...new Set(c.sl.map(s=>s[0]))],bin=shuf([...ids,...shuf(Object.keys(P).filter(k=>!ids.includes(k))).slice(0,3)]);
+B={c,f:[],x:0,ss:null,sp:null};show('build');
+H('#build',`<div class="bl"><div><svg id="bp" viewBox="0 0 200 420" role="img" aria-label="Rocket blueprint">${c.sl.map((s,i)=>`<g id="g${i}"></g><text id="n${i}" x="${s[1]+s[3]/2}" y="${s[2]+s[4]/2}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="700" fill="var(--ac)">${i+1}</text><rect class="slot" id="s${i}" tabindex="0" role="button" aria-label="Slot ${i+1}" x="${s[1]}" y="${s[2]}" width="${s[3]}" height="${s[4]}"/>`).join('')}</svg></div>
+<div><h2>${c.n}</h2><p class="mu">Read a clue, then pick the real part that fits. Click, tap or drag.</p><ol id="cl"></ol><div class="parts" id="bin">${bin.map(k=>`<button class="part" draggable="true" data-p="${k}">${ico(k)}${P[k][0]}</button>`).join('')}</div>
+<div class="card" id="bst"></div><p><button class="btn g" id="hint">💡 Hint (15 cr)</button> <button class="btn" id="go" disabled>🚀 Launch</button> <button class="btn g" id="bk">Back</button></p></div></div>`);
+c.sl.forEach((s,i)=>{const e=$('#s'+i);e.onclick=()=>pick('s',i);e.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pick('s',i)}};e.ondragover=ev=>ev.preventDefault();e.ondrop=ev=>{ev.preventDefault();place(i,ev.dataTransfer.getData('text'))}});
+$$('.part').forEach(b=>{b.onclick=()=>pick('p',b.dataset.p);b.ondragstart=ev=>ev.dataTransfer.setData('text',b.dataset.p)});
+$('#hint').onclick=()=>{if(S.cr<15)return toast('Not enough credits.');const i=B.ss!=null&&!B.f[B.ss]?B.ss:B.f.findIndex(x=>!x);if(i<0)return;const k=c.sl[i][0];S.cr-=15;hdr();save();const b=$(`[data-p="${k}"]`);b.classList.add('hint');setTimeout(()=>b.classList.remove('hint'),2500)};
+$('#bk').onclick=missions;$('#go').onclick=fly;ref()}
+function pick(t,v){if(t==='s'&&B.f[v])return;B[t==='s'?'ss':'sp']=v;if(B.ss!=null&&B.sp)return place(B.ss,B.sp);ref()}
+function place(i,pid){if(B.f[i]||!P[pid])return;const s=B.c.sl[i];
+if(pid===s[0]){B.f[i]=1;$('#g'+i).innerHTML=`<g class="pt" transform="translate(${s[1]} ${s[2]})">${drawP(pid,s[3],s[4])}</g>`;$('#n'+i).style.display='none';$('#s'+i).classList.add('done');S.cx[pid]=1;good();toast('✔ '+P[pid][0]+': '+P[pid][6]);if(Object.keys(S.cx).length>=11)award('cx')}
+else{B.x++;bad();const e=$('#s'+i);e.classList.add('bad');setTimeout(()=>e.classList.remove('bad'),400);toast('✘ That is the '+P[pid][0]+': '+P[pid][5])}
+B.ss=B.sp=null;save();ref()}
+const pst=()=>Math.max(.008,.03+.012*B.x-.006*S.lv);
+function ref(){const c=B.c,n=B.f.filter(Boolean).length;let m=0,th=0;c.sl.forEach((s,i)=>{if(B.f[i]){m+=P[s[0]][3];th+=P[s[0]][4]}});
+H('#cl',c.sl.map((s,i)=>`<li data-i="${i}" class="${B.f[i]?'ok':B.ss===i?'sel':''}">${i+1}. ${P[s[0]][5]}</li>`).join(''));
+$$('#cl li').forEach(l=>l.onclick=()=>pick('s',+l.dataset.i));
+$$('.slot').forEach((e,i)=>e.classList.toggle('sel',B.ss===i));$$('.part').forEach(b=>b.classList.toggle('sel',B.sp===b.dataset.p));
+H('#bst',`<b>Progress ${n}/${c.sl.length}</b> · Mistakes ${B.x}<div class="bar2"><i style="width:${n/c.sl.length*100}%"></i></div><span class="mu">Mass ${m.toFixed(1)} t · Liftoff thrust ${th.toFixed(1)} MN${th?' · TWR '+(th*101.97/m).toFixed(2):''}${n===c.sl.length?' · Reliability '+(Math.pow(1-pst(),c.ST.length)*100).toFixed(0)+'%':''}</span>`);
+$('#go').disabled=n<c.sl.length}
+// ---- flight ----
+let F;
+const bot=ev=>Math.max(...B.c.sl.filter(s=>s[5]<0||s[5]>=ev).map(s=>s[2]+s[4]));
+function fly(){const c=B.c,b0=bot(0),isE=k=>['f1','eng','ssme','srb','s2','s4b'].includes(k);show('flight');
+H('#flight',`<div id="fl"><div id="stars"></div><div id="pad"></div><div id="rk"><svg class="pt" viewBox="0 ${b0-405} 200 420">${c.sl.map((s,i)=>`<g id="r${i}"><g transform="translate(${s[1]} ${s[2]})">${drawP(s[0],s[3],s[4])}</g></g>`).join('')}${c.sl.map((s,i)=>isE(s[0])?`<g id="fm${i}" style="display:none" transform="translate(${s[1]+s[3]/2} ${s[2]+s[4]})"><path class="fl" d="M${-s[3]*.35} 0L0 ${s[3]*1.9}L${s[3]*.35} 0Z" fill="#ffb347" stroke="none"/></g>`:'').join('')}</svg></div><div id="hud"></div><div id="cd"></div><div id="gz"><b></b><i></i></div></div><p class="mu">Press SPACE or the button when the needle is in the green zone.</p><button class="btn" id="stg">STAGE ⏎</button>`);
+F={i:0,t:-3,sp:0,a0:0,v0:0,alt:0,v:0,q:[],l:performance.now(),n:0,isE};zone();$('#stg').onclick=stage;requestAnimationFrame(loopF)}
+function zone(){const g=B.c.ST[F.i].g,z=$('#gz b');z.style.left=g[0]*100+'%';z.style.width=(g[1]-g[0])*100+'%'}
+function flames(){B.c.sl.forEach((s,i)=>{const e=$('#fm'+i);if(e)e.style.display=F.lift&&!F.end&&(s[5]<0?s[0]==='ssme':s[5]===F.i)?'':'none'})}
+function loopF(now){if(!F||F.end)return;const c=B.c,st=c.ST[F.i],dt=Math.min((now-F.l)/1e3,.05);F.l=now;F.t+=dt;
+if(F.t<0){const n=Math.ceil(-F.t);if(n!==F.n){F.n=n;$('#cd').textContent=n;snd(440,.1,'square')}}
+else{if(!F.lift){F.lift=1;$('#cd').textContent='';$('#pad').style.transform='translateY(400px)';$('#stars').style.opacity=1;flames();snd(70,1.4,'sawtooth',.14)}
+F.sp=cl(F.sp+dt/st.d);const e=1-Math.pow(1-F.sp,2);F.alt=F.a0+(st.alt-F.a0)*e;F.v=F.v0+(st.v-F.v0)*e;if(F.sp>=1)stage()}
+const k=cl(F.alt/110),L=(a,b)=>Math.round(a+(b-a)*k);$('#fl').style.background=`linear-gradient(rgb(${L(120,3)},${L(190,5)},${L(255,18)}),rgb(${L(200,5)},${L(225,9)},${L(255,26)}))`;
+$('#stars').style.opacity=F.lift?Math.max(.15,k):0;$('#stars').style.animationDuration=(3/(.4+F.v)).toFixed(2)+'s';$('#rk').style.transform=`translateX(-50%) translate(${(Math.random()-.5)*2}px,${F.lift?(Math.random()-.5)*2:0}px)`;
+$('#gz i').style.left=F.sp*100+'%';
+$('#hud').innerHTML=`T${F.t<0?'-':'+'}${Math.abs(F.t).toFixed(0)} s<br>ALT ${F.alt>1e4?Math.round(F.alt).toLocaleString('en-US'):F.alt.toFixed(1)} km<br>VEL ${F.v.toFixed(1)} km/s<br>${st.n}`;
+requestAnimationFrame(loopF)}
+function stage(){if(!F||F.end||F.t<0||F.lock)return;F.lock=1;const c=B.c,st=c.ST[F.i],f=F.sp,[a,b]=st.g,g=f>=a&&f<=b?2:(f>=a-.12&&f<=b+.12?1:0);F.q.push(g);
+toast(['Mistimed staging!','Good staging.','PERFECT staging!'][g]);
+c.sl.forEach((s,i)=>{if(s[5]===F.i){$('#r'+i).classList.add('dr');const m=$('#fm'+i);if(m)m.style.display='none'}});
+snd(g==2?880:g?600:200,.25,'square',.08);
+const p=g==2?pst():g==1?pst()*1.6:pst()*4;
+if(Math.random()<p){F.end=1;$('#fl').insertAdjacentHTML('beforeend','<div id="bm"></div>');$('#rk').style.opacity=0;snd(60,1.2,'sawtooth',.2);
+ const why=g==0?(f<a?'You staged too early: the stage still had thrust to give, so the vehicle fell short of its speed.':'You staged too late: the empty stage became dead weight and the engines labored to push it.'):g==1?'Staging was slightly off, which stressed the vehicle’s structure.':'A rare engine anomaly. Real rockets carry redundancy because even perfect operations carry risk.';
+ return setTimeout(()=>modal(`<h2>💥 Launch failure</h2><p>${why}</p><p class="mu">Engineers study every failure to make the next flight safer.</p><button class="btn" id="r1">Retry</button><button class="btn g" id="r2">Missions</button>`,{r1:()=>openBuild(c),r2:missions}),1500)}
+F.a0=F.alt;F.v0=F.v;F.i++;F.sp=0;
+if(F.i>=c.ST.length){F.end=1;F.lift=0;flames();return setTimeout(win,1800)}
+setTimeout(()=>{F.lock=0;zone();flames()},700)}
+function win(){const c=B.c,q=F.q.reduce((x,y)=>x+y,0)/F.q.length/2,s=B.x===0&&q>=.8?3:B.x<=2&&q>=.5?2:1,cr=Math.round(60*s*c.m*(c===D?2:1));
+S.cr+=cr;S.st[c.id]=Math.max(S.st[c.id]||0,s);award('first');if(B.x===0)award('perf');if(c.id==='sat')award('moon');save();hdr();[523,659,784,1047].forEach((f,i)=>snd(f,.4,'sine',.12,i*.14));
+const last=c.sl.find(x=>x[5]<0);
+modal(`<h2>🚀 Mission success!</h2><p style="font-size:28px;margin:6px">${stars(s)}</p><p>+${cr} credits${c===D?' (daily bonus!)':''}</p><p class="mu">${c.id==='sat'?'Your crew is on a trajectory to the Moon.':c.id==='shu'?'The orbiter is in orbit and ready for its mission.':'Your instruments reached the edge of space.'}</p><button class="btn" id="r1">Missions</button><button class="btn g" id="r2">Fly again</button>`,{r1:missions,r2:()=>openBuild(c)})}
+// ---- identify quiz ----
+let Q;
+function quiz(){Q={n:0,s:0,b:0,cr:0,ok:0};show('quiz');nq()}
+function nq(){if(Q.n>=10)return eq();Q.n++;Q.lock=0;const ids=Object.keys(P),a=R(ids),k=Math.random()<.5,o=shuf([a,...shuf(ids.filter(x=>x!==a)).slice(0,3)]);Q.a=a;
+H('#quiz',`<div class="card"><p class="mu">Question ${Q.n}/10 · Streak ${Q.s} · +${Q.cr} cr</p><div class="bar2"><i id="tm"></i></div>${k?`<h2>Which part is this?</h2><div style="max-width:200px;margin:auto">${ico(a,150)}</div>`:`<h2>Which part? “${P[a][5]}”</h2>`}<div class="parts" id="qo">${o.map((x,j)=>`<button class="part" data-p="${x}">${k?'':ico(x)}<b>${j+1}. ${P[x][0]}</b></button>`).join('')}</div><p id="fb" class="mu" style="min-height:42px"></p></div>`);
+$$('#qo .part').forEach(b=>b.onclick=()=>ans(b.dataset.p));Q.t0=performance.now();clearInterval(Q.iv);Q.iv=setInterval(()=>{const f=(performance.now()-Q.t0)/12e3;$('#tm').style.width=f*100+'%';if(f>=1)ans(null)},100)}
+function ans(x){if(Q.lock)return;Q.lock=1;clearInterval(Q.iv);const ok=x===Q.a;
+if(ok){Q.ok++;Q.s++;Q.b=Math.max(Q.b,Q.s);Q.cr+=10+Math.min(Q.s,5)*2;S.cx[Q.a]=1;good()}else{Q.s=0;bad()}
+$$('#qo .part').forEach(b=>{if(b.dataset.p===Q.a)b.style.borderColor='var(--ok)';else if(b.dataset.p===x)b.style.borderColor='var(--bad)'});
+$('#fb').textContent=(ok?'✔ Correct! ':x?'✘ It was the '+P[Q.a][0]+'. ':'⏱ Time up. It was the '+P[Q.a][0]+'. ')+P[Q.a][6];
+$('#fb').insertAdjacentHTML('afterend','<button class="btn" id="nx">Next ▶</button>');$('#nx').onclick=nq}
+function eq(){S.cr+=Q.cr;S.bs=Math.max(S.bs,Q.b);if(Q.b>=5)award('s5');if(Object.keys(S.cx).length>=11)award('cx');save();hdr();
+modal(`<h2>Round complete</h2><p>${Q.ok}/10 correct · best streak ${Q.b}</p><p>+${Q.cr} credits</p><button class="btn" id="r1">Again</button><button class="btn g" id="r2">Menu</button>`,{r1:quiz,r2:menu})}
+// ---- codex ----
+function codex(){show('codex');H('#codex',`<h2>Parts Codex</h2><p class="mu">Identify a part or install it correctly to unlock it.</p><div class="grid">${Object.keys(P).map(k=>{const u=S.cx[k],p=P[k];return `<div class="card" ${u?'':'style="opacity:.55"'}><div class="${u?'':'lk'}">${ico(k,70)}</div><b>${u?p[0]:'???'}</b><p class="mu">${u?p[5]+' '+p[6]+(p[3]>=1?' Mass ≈ '+p[3]+' t.':''):'Not yet discovered.'}</p></div>`}).join('')}</div><p><button class="btn g" id="bk">Back</button></p>`);$('#bk').onclick=menu}
+// ---- global ----
+$('#home').onclick=menu;$('#snb').onclick=()=>{S.mu=S.mu?0:1;save();hdr()};
+const dk=()=>(S.th||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+if(S.th)document.documentElement.dataset.theme=S.th;
+$('#thb').onclick=()=>{S.th=dk()==='dark'?'light':'dark';document.documentElement.dataset.theme=S.th;save()};
+addEventListener('keydown',e=>{if($('#flight').classList.contains('on')&&e.code==='Space'){e.preventDefault();stage()}
+else if($('#quiz').classList.contains('on')&&/^[1-4]$/.test(e.key)&&!Q.lock){const b=$$('#qo .part')[+e.key-1];b&&b.click()}
+else if($('#quiz').classList.contains('on')&&e.key==='Enter'&&$('#nx'))$('#nx').click();
+else if(e.key==='Escape'&&!$('#md').classList.contains('on')&&!F)menu()});
+menu();
+})();
+</script></body></html>

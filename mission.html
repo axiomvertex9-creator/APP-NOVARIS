@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RADIO TRANSMISSION Control - Deep Space Signal & Rover Telemetry</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        nasa: {
+                            dark: '#080B10',
+                            panel: '#0F141C',
+                            border: '#1E293B',
+                            accent: '#0284C7',
+                            cyan: '#06B6D4',
+                            amber: '#F59E0B',
+                            red: '#EF4444',
+                            green: '#10B981',
+                            mars: '#C85A32'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbars and radar animations */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #080B10; }
+        ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
+        .scanline {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 240, 255, 0.04) 50%,
+                rgba(0, 240, 255, 0.04)
+            );
+            background-size: 100% 4px;
+        }
+
+        .crt-glow {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+        }
+
+        .mars-glow {
+            box-shadow: 0 0 20px rgba(200, 90, 50, 0.2);
+        }
+
+        /* Utility for hiding scrollbar visually while retaining functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-nasa-dark text-slate-200 font-mono antialiased h-screen overflow-hidden flex flex-col select-none scanline">
+
+    <!-- TOP HEADER / DSN SYSTEM STATUS BAR -->
+    <header class="h-14 border-b border-nasa-border bg-nasa-panel/90 flex items-center justify-between px-4 z-20 shrink-0">
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                <svg class="w-7 h-7 text-nasa-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                    <path d="M2 12h20"/>
+                </svg>
+                <span class="font-bold tracking-wider text-base text-white">JPL MISSION CONTROL</span>
+                <span class="text-xs bg-nasa-accent/20 text-nasa-cyan px-2 py-0.5 rounded border border-nasa-accent/40 font-semibold">MARS TELEMETRY v4.8</span>
+            </div>
+            
+            <div class="h-6 w-[1px] bg-nasa-border"></div>
+
+            <!-- Mission Selection Dropdown -->
+            <div class="flex items-center space-x-2">
+                <span class="text-xs text-slate-400">MISSION:</span>
+                <select id="missionSelect" class="bg-nasa-dark text-xs border border-nasa-border rounded px-2 py-1 text-nasa-cyan focus:outline-none focus:border-nasa-accent">
+                    <option value="1">M1: First Contact & HGA Calibration</option>
+                    <option value="2">M2: Dust Storm Blind Navigation</option>
+                    <option value="3">M3: Jezero Crater Wall & Relay</option>
+                    <option value="sandbox">M4: Deep Space Sandbox Mode</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- DSN Station Lock Status -->
+        <div class="flex items-center space-x-6 text-xs">
+            <div class="flex items-center space-x-2">
+                <span class="text-slate-400">DSN STATION:</span>
+                <span id="dsnStationDisplay" class="text-nasa-green font-bold">DSN 14 (GOLDSTONE)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-slate-400">DISTANCE:</span>
+                <span id="distanceDisplay" class="text-slate-200">225.4 M km</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-slate-400">ONE-WAY DELAY (OWLT):</span>
+                <span id="owltDisplay" class="text-nasa-amber font-bold">12m 31s</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-slate-400">SIM RATIO:</span>
+                <select id="simSpeedSelect" class="bg-nasa-dark text-xs text-nasa-cyan border border-nasa-border rounded px-1 py-0.5">
+                    <option value="1">1s = 1s (Realtime)</option>
+                    <option value="60" selected>1s = 1min (60x)</option>
+                    <option value="300">1s = 5min (300x)</option>
+                </select>
+            </div>
+            <button id="audioToggleBtn" class="p-1.5 rounded border border-nasa-border hover:bg-slate-800 text-slate-300">
+                <svg id="audioIcon" class="w-4 h-4 text-nasa-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 6l-4 4H4v4h4l4 4V6z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTROL CENTER WORKSPACE -->
+    <div class="flex-1 flex overflow-hidden">
+
+        <!-- LEFT PANEL: DSP SIGNAL REPAIR & DSN CONSOLE -->
+        <aside class="w-80 border-r border-nasa-border bg-nasa-panel flex flex-col shrink-0">
+            <div class="p-3 border-b border-nasa-border bg-slate-900/50 flex justify-between items-center">
+                <h2 class="text-xs font-bold text-nasa-cyan flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    DIGITAL SIGNAL PROCESSING (DSP)
+                </h2>
+                <span id="signalLockBadge" class="text-[10px] px-2 py-0.5 rounded font-bold bg-red-950 text-red-400 border border-red-800">NO LOCK</span>
+            </div>
+
+            <div class="p-4 flex-1 overflow-y-auto space-y-5 text-xs">
+                <!-- SNR Telemetry Graph Canvas -->
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>SNR / CARRIER POWER</span>
+                        <span id="snrValue" class="text-nasa-cyan font-bold">4.2 dB</span>
+                    </div>
+                    <canvas id="snrGraphCanvas" class="w-full h-20 bg-nasa-dark rounded border border-nasa-border"></canvas>
+                </div>
+
+                <!-- HGA Vector Alignment -->
+                <div class="space-y-3 bg-nasa-dark/60 p-3 rounded border border-nasa-border">
+                    <div class="flex justify-between items-center text-slate-300 font-semibold border-b border-nasa-border/60 pb-1">
+                        <span>HIGH GAIN ANTENNA (HGA)</span>
+                        <span id="hgaErrText" class="text-[10px] text-nasa-amber">DEV: 14.2°</span>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                            <span>AZIMUTH (°):</span>
+                            <span id="azimuthVal" class="text-slate-200">182.0°</span>
+                        </div>
+                        <input type="range" id="azimuthSlider" min="0" max="360" value="182" class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-nasa-cyan">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                            <span>ELEVATION (°):</span>
+                            <span id="elevationVal" class="text-slate-200">42.5°</span>
+                        </div>
+                        <input type="range" id="elevationSlider" min="0" max="90" value="42" class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-nasa-cyan">
+                    </div>
+                </div>
+
+                <!-- FSK Tuning & Modulation -->
+                <div class="space-y-3 bg-nasa-dark/60 p-3 rounded border border-nasa-border">
+                    <div class="flex justify-between items-center text-slate-300 font-semibold border-b border-nasa-border/60 pb-1">
+                        <span>FSK FREQUENCY MODULATION</span>
+                        <span id="fskOffset" class="text-[10px] text-nasa-amber">Δf: +120 Hz</span>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                            <span>CARRIER FREQ SHIFT:</span>
+                            <span id="freqShiftVal" class="text-slate-200">8415.20 MHz</span>
+                        </div>
+                        <input type="range" id="freqSlider" min="-500" max="500" value="120" class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-nasa-cyan">
+                    </div>
+                </div>
+
+                <!-- Error Correction / LDPC Code Rate -->
+                <div class="space-y-2 bg-nasa-dark/60 p-3 rounded border border-nasa-border">
+                    <div class="flex justify-between items-center text-slate-300 font-semibold">
+                        <span>REED-SOLOMON / LDPC</span>
+                        <span id="berVal" class="text-[10px] text-nasa-red">BER: 4.8e-2</span>
+                    </div>
+                    <select id="fecSelect" class="w-full bg-nasa-dark border border-nasa-border rounded p-1.5 text-xs text-slate-200 focus:outline-none focus:border-nasa-cyan">
+                        <option value="1/2">LDPC Rate 1/2 (Heavy Overhead, Max Repair)</option>
+                        <option value="2/3" selected>LDPC Rate 2/3 (Standard DSN Link)</option>
+                        <option value="7/8">LDPC Rate 7/8 (Low Overhead, High SNR Required)</option>
+                    </select>
+                </div>
+
+                <!-- Buffer Purge & Lock Actions -->
+                <div class="flex gap-2">
+                    <button id="purgeBufferBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 py-2 rounded text-[11px] font-bold transition">
+                        PURGE CORRUPT BUFFERS
+                    </button>
+                    <button id="realignHgaBtn" class="flex-1 bg-nasa-accent/20 hover:bg-nasa-accent/40 border border-nasa-accent text-nasa-cyan py-2 rounded text-[11px] font-bold transition">
+                        AUTO-LOCK HGA
+                    </button>
+                </div>
+
+                <!-- DSN Ground Station Telemetry Info -->
+                <div class="p-3 bg-slate-900/80 rounded border border-nasa-border space-y-1.5 text-[11px]">
+                    <div class="text-slate-400 font-bold border-b border-slate-800 pb-1">DSN LINK METRICS</div>
+                    <div class="flex justify-between"><span class="text-slate-500">PACKET ERROR RATE (PER):</span><span id="perVal" class="text-nasa-amber">18.4%</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">BITRATE:</span><span id="bitrateVal" class="text-slate-200">2.0 kbps</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">DSN DISH ELEVATION:</span><span class="text-slate-200">68.4° (Goldstone)</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">SOLAR ELONGATION:</span><span class="text-slate-200">34.2°</span></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CENTER VIEWPORT: TOPOGRAPHIC RADAR, CAMERA SYNTHESIS, AND ORBIT MAP -->
+        <main class="flex-1 flex flex-col bg-nasa-dark relative overflow-hidden">
+
+            <!-- Subnav View Selector (Horizontal Scrolling Enabled) -->
+            <div class="h-10 border-b border-nasa-border bg-nasa-panel/60 flex items-center px-4 justify-between text-xs z-10">
+                <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar whitespace-nowrap pr-4">
+                    <button id="viewRadarBtn" class="px-3 py-1 rounded bg-nasa-accent/20 text-nasa-cyan border border-nasa-accent/50 font-bold shrink-0">2.5D TOPOGRAPHIC LIDAR</button>
+                    <button id="viewCamBtn" class="px-3 py-1 rounded hover:bg-slate-800 text-slate-400 border border-transparent shrink-0">SYNTHETIC CAMERA FEED</button>
+                    <button id="viewOrbitBtn" class="px-3 py-1 rounded hover:bg-slate-800 text-slate-400 border border-transparent shrink-0">EARTH-MARS ORBIT MAP</button>
+                </div>
+                <div class="flex items-center space-x-3 text-[11px] shrink-0">
+                    <span class="text-slate-400">ROVER STATUS:</span>
+                    <span id="roverStatusBadge" class="text-nasa-green font-bold flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-nasa-green animate-pulse"></span> NOMINAL
+                    </span>
+                </div>
+            </div>
+
+            <!-- Main Interactive Canvas Render Area (Resizable & Scrollable Map Viewport) -->
+            <div id="mapViewport" class="flex-1 relative bg-black overflow-auto select-none cursor-grab active:cursor-grabbing resize-y border-b border-nasa-border/40 min-h-[300px]">
+                
+                <!-- Expanded map canvas element centered with padding for smooth exploration -->
+                <div class="relative min-w-[2400px] min-h-[1600px] w-full h-full flex items-center justify-center">
+                    <div class="absolute w-[1920px] h-[1200px] top-[200px] left-[240px]">
+                        <!-- LiDAR Radar Terrain Canvas -->
+                        <canvas id="marsCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+                        <!-- HUD Overlays (Topographic Grid & Target Info) - Anchored inside map grid left -->
+                        <div class="absolute top-4 left-4 z-10 space-y-2">
+                            <div class="bg-nasa-panel/80 backdrop-blur p-2.5 rounded border border-nasa-border text-[11px] space-y-1 w-56">
+                                <div class="text-nasa-cyan font-bold flex justify-between border-b border-nasa-border pb-1">
+                                    <span>VEHICLE TELEMETRY</span>
+                                    <span>PERSEVERANCE-X</span>
+                                </div>
+                                <div class="flex justify-between"><span class="text-slate-400">SLOPE / PITCH:</span><span id="pitchVal" class="text-slate-200">1.2°</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">ROLL ANGLE:</span><span id="rollVal" class="text-slate-200">0.4°</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">WHEEL SLIP COEFF:</span><span id="slipVal" class="text-nasa-amber">0.12 (Regolith)</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">SOLAR DUST COVER:</span><span id="dustVal" class="text-slate-200">8.4%</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">BATTERY POWER:</span><span id="powerVal" class="text-nasa-green font-bold">100% (550W)</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Signal Burst Transmission Panel Overlay - Placed directly below vehicle telemetry on the left side to avoid overlap -->
+                        <div class="absolute top-52 left-4 z-10">
+                            <div class="bg-nasa-panel/80 backdrop-blur p-3 rounded border border-nasa-border text-xs w-56 space-y-2">
+                                <div class="text-slate-300 font-bold border-b border-nasa-border pb-1 flex justify-between">
+                                    <span>TRANSMISSION PIPE</span>
+                                    <span id="burstState" class="text-nasa-amber">IDLE</span>
+                                </div>
+                                <div class="space-y-1 text-[11px]">
+                                    <div class="flex justify-between"><span class="text-slate-400">PACKET BUFFER:</span><span id="bufferUsage">0 / 256 Bytes</span></div>
+                                    <div class="w-full bg-slate-800 h-1.5 rounded overflow-hidden">
+                                        <div id="bufferBar" class="bg-nasa-cyan h-full w-0 transition-all"></div>
+                                    </div>
+                                    <div class="flex justify-between pt-1"><span class="text-slate-400">TIME TO TARGET (OWLT):</span><span id="timeToTarget">--:--</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Target Overlay Box -->
+                        <div id="canvasNotification" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-nasa-panel/90 border border-nasa-cyan/40 px-4 py-2 rounded-full text-xs text-nasa-cyan shadow-lg pointer-events-none hidden z-10">
+                            Sample Target Acquired: Proceed to Site A
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM COMMAND LOG & TELEMETRY STREAM -->
+            <div class="h-36 border-t border-nasa-border bg-nasa-panel flex flex-col shrink-0 z-10">
+                <div class="px-3 py-1.5 bg-slate-900/60 border-b border-nasa-border flex justify-between items-center text-[11px]">
+                    <span class="text-slate-400 font-bold">REALTIME DSN TELEMETRY LOG</span>
+                    <span id="telemetryRate" class="text-nasa-cyan">RECV 12 PACKETS / MIN</span>
+                </div>
+                <div id="telemetryLog" class="flex-1 p-3 font-mono text-[11px] overflow-y-auto space-y-1 text-slate-300">
+                    <div><span class="text-slate-500">[00:00:00]</span> <span class="text-nasa-cyan">SYS_INIT:</span> Deep Space Network lock online. Target Mars Jezero Sector.</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT PANEL: COMMAND QUEUE & SEQUENCE BUILDER -->
+        <aside class="w-96 border-l border-nasa-border bg-nasa-panel flex flex-col shrink-0">
+            <div class="p-3 border-b border-nasa-border bg-slate-900/50 flex justify-between items-center">
+                <h2 class="text-xs font-bold text-nasa-cyan flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    COMMAND SEQUENCE BUILDER
+                </h2>
+                <span id="cmdMemoryBadge" class="text-[10px] text-slate-400">MEM: 0%</span>
+            </div>
+
+            <div class="p-4 flex-1 flex flex-col space-y-4 overflow-y-auto text-xs">
+
+                <!-- Command Selector Console -->
+                <div class="bg-nasa-dark/80 p-3 rounded border border-nasa-border space-y-3">
+                    <div class="text-slate-300 font-bold border-b border-nasa-border/60 pb-1">APPEND TELEMETRY PACKET</div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="cmd-add-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded text-left" data-type="MOVE">
+                            <div class="font-bold text-nasa-cyan text-[11px]">MOVE_FORWARD</div>
+                            <div class="text-[9px] text-slate-400">Meters (+Power)</div>
+                        </button>
+                        <button class="cmd-add-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded text-left" data-type="TURN">
+                            <div class="font-bold text-nasa-cyan text-[11px]">TURN_HEADING</div>
+                            <div class="text-[9px] text-slate-400">Degrees Azimuth</div>
+                        </button>
+                        <button class="cmd-add-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded text-left" data-type="SAMPLE">
+                            <div class="font-bold text-nasa-amber text-[11px]">SCAN_SAMPLE</div>
+                            <div class="text-[9px] text-slate-400">Collect Regolith</div>
+                        </button>
+                        <button class="cmd-add-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded text-left" data-type="CHARGE">
+                            <div class="font-bold text-nasa-green text-[11px]">CHARGE_SOLAR</div>
+                            <div class="text-[9px] text-slate-400">Recharge Array</div>
+                        </button>
+                    </div>
+
+                    <!-- Selected Command Parameters Input -->
+                    <div id="cmdParamBox" class="bg-slate-900 p-2.5 rounded border border-slate-800 space-y-2 hidden">
+                        <div class="flex justify-between items-center text-[11px]">
+                            <span id="paramTitle" class="font-bold text-nasa-cyan">PARAM: MOVE_FORWARD</span>
+                            <span class="text-slate-400 text-[10px]">BYTES: 16B</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="paramValue" value="5" class="w-full bg-nasa-dark border border-nasa-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-nasa-cyan">
+                            <span id="paramUnit" class="text-slate-400 text-[10px]">METERS</span>
+                        </div>
+                        <button id="addCmdConfirmBtn" class="w-full bg-nasa-accent hover:bg-sky-600 text-white py-1 rounded text-[11px] font-bold">
+                            PUSH TO SEQUENCE BUFFER
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sequence Queue List -->
+                <div class="flex-1 flex flex-col bg-nasa-dark/60 rounded border border-nasa-border p-3 overflow-hidden">
+                    <div class="flex justify-between items-center mb-2 pb-1 border-b border-nasa-border">
+                        <span class="text-slate-300 font-bold text-[11px]">QUEUED BURST SEQUENCES</span>
+                        <button id="clearQueueBtn" class="text-[10px] text-nasa-red hover:underline">CLEAR</button>
+                    </div>
+
+                    <div id="sequenceList" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                        <!-- Dynamic Command Blocks Inserted Here -->
+                        <div class="text-slate-500 text-[11px] text-center py-8">
+                            No commands in packet buffer.<br>Select a command above to queue.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sequence Calculations Summary -->
+                <div class="p-3 bg-slate-900/90 rounded border border-nasa-border space-y-1.5 text-[11px]">
+                    <div class="flex justify-between"><span class="text-slate-400">ESTIMATED DELAY (OWLT):</span><span id="estDelayText" class="text-nasa-amber font-bold">12m 31s</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">PACKET ARRIVAL TIME:</span><span id="estArrivalTime" class="text-slate-200">--:--:--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">EST POWER CONSUMPTION:</span><span id="estPowerText" class="text-slate-200">0 Wh</span></div>
+                </div>
+
+                <!-- TRANSMIT BURST BUTTON -->
+                <button id="transmitBurstBtn" class="w-full bg-nasa-green hover:bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-600 disabled:border-slate-700 text-slate-950 font-bold py-3 rounded border border-emerald-400 text-xs tracking-wider shadow-lg transition flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    TRANSMIT TELEMETRY BURST
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- SCRIPT SIMULATION ENGINE -->
+    <script>
+        /**
+         * DEEP SPACE MISSION CONTROL - MARS SIMULATION ENGINE
+         * Real physical speed-of-light delays, Digital Signal Processing lock, 
+         * LiDAR canvas terrain visualization, and packet burst processing.
+         */
+
+        // System Constants
+        const C_LIGHT_KMS = 299792; // Speed of light in km/s
+        
+        // Game State Structure
+        const state = {
+            audioEnabled: true,
+            missionId: '1',
+            viewMode: 'radar', // 'radar', 'cam', 'orbit'
+            simSpeedRatio: 60, // 1s real = 60s sim
+            
+            // DSN & Orbital Physics
+            marsDistanceKm: 225400000, // 225.4 M km
+            owltSeconds: 751.8, // One-Way Light Time
+            
+            // Signal & DSP Tuning
+            hgaAzimuth: 182,
+            hgaElevation: 42,
+            targetAzimuth: 180,
+            targetElevation: 40,
+            fskFreqShift: 120, // Hz
+            fecRate: '2/3',
+            
+            // Calculated Signal Metrics
+            snrDb: 4.2,
+            ber: 0.048,
+            per: 0.184,
+            signalLocked: false,
+            
+            // Rover Physics & Vehicle State
+            rover: {
+                x: 100, // meters
+                y: 100,
+                heading: 0, // degrees
+                pitch: 1.2,
+                roll: 0.4,
+                powerWatts: 550,
+                batteryPct: 100, // Starts at 100%
+                wheelSlip: 0.12,
+                dustCoverage: 8.4,
+                samplesCollected: 0
+            },
+            
+            // Target / Mission Objectives
+            targetSite: { x: 180, y: 160, radius: 12 },
+            hazardZones: [
+                { x: 130, y: 110, radius: 18, type: 'sandTrap', slip: 0.65 },
+                { x: 150, y: 80, radius: 22, type: 'boulders', roughness: 0.8 }
+            ],
+
+            // Command Packet Queue
+            commandQueue: [],
+            transmittingBursts: [], // Array of in-flight burst packets
+            
+            // Camera Delay Frame Buffer
+            cameraFrameBuffer: [],
+            telemetryLogs: []
+        };
+
+        // Web Audio Synthesizer Framework
+        class AudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.carrierOsc = null;
+                this.noiseNode = null;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioCtx();
+                
+                // Deep Space Carrier Hum
+                this.carrierOsc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                this.carrierOsc.type = 'sine';
+                this.carrierOsc.frequency.setValueAtTime(120, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
+                this.carrierOsc.connect(gain);
+                gain.connect(this.ctx.destination);
+                this.carrierOsc.start();
+            }
+
+            playChirp() {
+                if (!state.audioEnabled || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1760, this.ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+
+            playPing() {
+                if (!state.audioEnabled || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(2400, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.4);
+            }
+        }
+
+        const audioEngine = new AudioEngine();
+
+        // Canvas Elements
+        const marsCanvas = document.getElementById('marsCanvas');
+        const marsCtx = marsCanvas.getContext('2d');
+        const snrCanvas = document.getElementById('snrGraphCanvas');
+        const snrCtx = snrCanvas.getContext('2d');
+        const mapViewport = document.getElementById('mapViewport');
+
+        // Drag to scroll map logic
+        let isDraggingMap = false;
+        let dragStartX = 0, dragStartY = 0;
+        let scrollStartX = 0, scrollStartY = 0;
+
+        mapViewport.addEventListener('mousedown', (e) => {
+            isDraggingMap = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            scrollStartX = mapViewport.scrollLeft;
+            scrollStartY = mapViewport.scrollTop;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingMap) return;
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+            mapViewport.scrollLeft = scrollStartX - dx;
+            mapViewport.scrollTop = scrollStartY - dy;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDraggingMap = false;
+        });
+
+        // SNR History Buffer for Canvas Plot
+        const snrHistory = new Array(60).fill(4.0);
+
+        // Resize Canvas dynamically based on fixed dimensions of canvas element container
+        function resizeCanvases() {
+            marsCanvas.width = 1920;
+            marsCanvas.height = 1200;
+            snrCanvas.width = snrCanvas.parentElement.clientWidth;
+            snrCanvas.height = snrCanvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvases);
+
+        // Core Physics & DSP Calculation Loop
+        function calculateDSP() {
+            // HGA Azimuth / Elevation error degrees
+            const azErr = Math.abs(state.hgaAzimuth - state.targetAzimuth);
+            const elErr = Math.abs(state.hgaElevation - state.targetElevation);
+            const totalHgaErr = Math.sqrt(azErr * azErr + elErr * elErr);
+
+            document.getElementById('hgaErrText').innerText = `DEV: ${totalHgaErr.toFixed(1)}°`;
+
+            // FSK frequency deviation error
+            const freqErr = Math.abs(state.fskFreqShift);
+
+            // Calculate Base Signal to Noise Ratio (dB)
+            let baseSnr = 18.0 - (totalHgaErr * 0.8) - (freqErr * 0.015);
+            if (state.missionId === '2') baseSnr -= 5.0; // Dust Storm attenuation
+            baseSnr += (Math.random() - 0.5) * 0.4; // Cosmic noise fluctuation
+            
+            state.snrDb = Math.max(-10, Math.min(25, baseSnr));
+
+            // Bit Error Rate (BER) equation approximation
+            state.ber = Math.min(0.5, Math.max(1e-6, Math.exp(-0.8 * state.snrDb)));
+
+            // FEC Code Rate correction modifier
+            let fecMod = 1.0;
+            if (state.fecRate === '1/2') fecMod = 0.3;
+            if (state.fecRate === '2/3') fecMod = 0.6;
+            if (state.fecRate === '7/8') fecMod = 0.95;
+
+            state.per = Math.min(1.0, Math.max(0.0, state.ber * 12 * fecMod));
+
+            // Determine if Signal Lock is Established
+            state.signalLocked = (state.snrDb > 6.0 && state.per < 0.15);
+
+            // Update UI Badges & Text
+            const lockBadge = document.getElementById('signalLockBadge');
+            if (state.signalLocked) {
+                lockBadge.innerText = 'CARRIER LOCK';
+                lockBadge.className = 'text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
+            } else {
+                lockBadge.innerText = 'NO LOCK';
+                lockBadge.className = 'text-[10px] px-2 py-0.5 rounded font-bold bg-red-950 text-red-400 border border-red-800';
+            }
+
+            document.getElementById('snrValue').innerText = `${state.snrDb.toFixed(1)} dB`;
+            document.getElementById('berVal').innerText = `BER: ${state.ber.toExponential(1)}`;
+            document.getElementById('perVal').innerText = `${(state.per * 100).toFixed(1)}%`;
+
+            // Record SNR graph point
+            snrHistory.push(state.snrDb);
+            snrHistory.shift();
+        }
+
+        // Render SNR Graph
+        function renderSNRGraph() {
+            const w = snrCanvas.width;
+            const h = snrCanvas.height;
+            snrCtx.clearRect(0, 0, w, h);
+
+            // Grid lines
+            snrCtx.strokeStyle = '#1E293B';
+            snrCtx.lineWidth = 1;
+            snrCtx.beginPath();
+            for (let y = 0; y < h; y += 15) {
+                snrCtx.moveTo(0, y);
+                snrCtx.lineTo(w, y);
+            }
+            snrCtx.stroke();
+
+            // Threshold line (6dB Lock)
+            const lockY = h - ((6 + 10) / 35) * h;
+            snrCtx.strokeStyle = '#10B981';
+            snrCtx.setLineDash([2, 4]);
+            snrCtx.beginPath();
+            snrCtx.moveTo(0, lockY);
+            snrCtx.lineTo(w, lockY);
+            snrCtx.stroke();
+            snrCtx.setLineDash([]);
+
+            // SNR Plot
+            snrCtx.strokeStyle = state.signalLocked ? '#06B6D4' : '#EF4444';
+            snrCtx.lineWidth = 1.5;
+            snrCtx.beginPath();
+            for (let i = 0; i < snrHistory.length; i++) {
+                const x = (i / (snrHistory.length - 1)) * w;
+                const val = snrHistory[i];
+                const y = h - ((val + 10) / 35) * h;
+                if (i === 0) snrCtx.moveTo(x, y);
+                else snrCtx.lineTo(x, y);
+            }
+            snrCtx.stroke();
+        }
+
+        // Render Mars Topographic 2.5D LiDAR Canvas
+        function renderMarsCanvas() {
+            const w = marsCanvas.width;
+            const h = marsCanvas.height;
+            marsCtx.fillStyle = '#080B10';
+            marsCtx.fillRect(0, 0, w, h);
+
+            if (state.viewMode === 'radar') {
+                // Render Topographic Elevation Contours
+                marsCtx.strokeStyle = '#1E293B';
+                marsCtx.lineWidth = 1;
+                const step = 40;
+                for (let x = 0; x < w; x += step) {
+                    marsCtx.beginPath();
+                    marsCtx.moveTo(x, 0);
+                    marsCtx.lineTo(x, h);
+                    marsCtx.stroke();
+                }
+                for (let y = 0; y < h; y += step) {
+                    marsCtx.beginPath();
+                    marsCtx.moveTo(0, y);
+                    marsCtx.lineTo(w, y);
+                    marsCtx.stroke();
+                }
+
+                // Render Hazard Zones
+                state.hazardZones.forEach(zone => {
+                    marsCtx.fillStyle = zone.type === 'sandTrap' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+                    marsCtx.strokeStyle = zone.type === 'sandTrap' ? '#F59E0B' : '#EF4444';
+                    marsCtx.beginPath();
+                    marsCtx.arc(zone.x * 3, zone.y * 3, zone.radius * 3, 0, Math.PI * 2);
+                    marsCtx.fill();
+                    marsCtx.stroke();
+
+                    marsCtx.fillStyle = zone.type === 'sandTrap' ? '#F59E0B' : '#EF4444';
+                    marsCtx.font = '10px monospace';
+                    marsCtx.fillText(zone.type.toUpperCase(), zone.x * 3 - 20, zone.y * 3);
+                });
+
+                // Target Extraction Site
+                marsCtx.strokeStyle = '#06B6D4';
+                marsCtx.lineWidth = 2;
+                marsCtx.setLineDash([4, 4]);
+                marsCtx.beginPath();
+                marsCtx.arc(state.targetSite.x * 3, state.targetSite.y * 3, state.targetSite.radius * 3, 0, Math.PI * 2);
+                marsCtx.stroke();
+                marsCtx.setLineDash([]);
+                
+                marsCtx.fillStyle = '#06B6D4';
+                marsCtx.font = '10px monospace';
+                marsCtx.fillText('TARGET_SITE_ALPHA', state.targetSite.x * 3 - 40, state.targetSite.y * 3 - (state.targetSite.radius * 3 + 6));
+
+                // Forecast Ghost Trajectory Path (Predicted)
+                if (state.commandQueue.length > 0) {
+                    marsCtx.strokeStyle = 'rgba(6, 182, 212, 0.6)';
+                    marsCtx.lineWidth = 2;
+                    marsCtx.setLineDash([3, 3]);
+                    marsCtx.beginPath();
+                    let curX = state.rover.x * 3;
+                    let curY = state.rover.y * 3;
+                    let curHead = state.rover.heading;
+                    marsCtx.moveTo(curX, curY);
+
+                    state.commandQueue.forEach(cmd => {
+                        if (cmd.type === 'MOVE') {
+                            const dist = cmd.val * 3;
+                            curX += Math.cos(curHead * Math.PI / 180) * dist;
+                            curY += Math.sin(curHead * Math.PI / 180) * dist;
+                            marsCtx.lineTo(curX, curY);
+                        } else if (cmd.type === 'TURN') {
+                            curHead += cmd.val;
+                        }
+                    });
+                    marsCtx.stroke();
+                    marsCtx.setLineDash([]);
+                }
+
+                // Render Rover Position
+                const rx = state.rover.x * 3;
+                const ry = state.rover.y * 3;
+
+                // LiDAR Sweep Radar Effect
+                const now = Date.now() * 0.002;
+                marsCtx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
+                marsCtx.beginPath();
+                marsCtx.arc(rx, ry, 60 + Math.sin(now) * 10, 0, Math.PI * 2);
+                marsCtx.stroke();
+
+                // Rover Vector Triangle
+                marsCtx.save();
+                marsCtx.translate(rx, ry);
+                marsCtx.rotate(state.rover.heading * Math.PI / 180);
+
+                marsCtx.fillStyle = '#10B981';
+                marsCtx.beginPath();
+                marsCtx.moveTo(10, 0);
+                marsCtx.lineTo(-8, -6);
+                marsCtx.lineTo(-8, 6);
+                marsCtx.closePath();
+                marsCtx.fill();
+
+                marsCtx.restore();
+
+            } else if (state.viewMode === 'cam') {
+                // Synthetic Mars Surface Camera Frame
+                marsCtx.fillStyle = '#110905';
+                marsCtx.fillRect(0, 0, w, h);
+
+                // Horizon and Martian Sky
+                const grad = marsCtx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#C85A32');
+                grad.addColorStop(0.4, '#3A180E');
+                grad.addColorStop(1, '#080403');
+                marsCtx.fillStyle = grad;
+                marsCtx.fillRect(0, 0, w, h * 0.5);
+
+                // Martian Terrain Ridge
+                marsCtx.fillStyle = '#220E08';
+                marsCtx.beginPath();
+                marsCtx.moveTo(0, h * 0.5);
+                for (let x = 0; x <= w; x += 20) {
+                    const noise = Math.sin(x * 0.02) * 15 + Math.cos(x * 0.05) * 8;
+                    marsCtx.lineTo(x, h * 0.5 - noise);
+                }
+                marsCtx.lineTo(w, h);
+                marsCtx.lineTo(0, h);
+                marsCtx.fill();
+
+                // Telemetry Camera Grain & Delay Frame Overlay
+                marsCtx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+                for (let i = 0; i < 500; i++) {
+                    const rx = Math.random() * w;
+                    const ry = Math.random() * h;
+                    marsCtx.fillRect(rx, ry, 2, 2);
+                }
+
+                // Camera Timestamp Banner
+                marsCtx.fillStyle = '#06B6D4';
+                marsCtx.font = '12px monospace';
+                marsCtx.fillText('HAZCAM_FRONT_LEFT // DELAYED FRAME TELEMETRY', 20, 30);
+                marsCtx.fillText(`FRAME_LATENCY: ${state.owltSeconds.toFixed(1)}s`, 20, 48);
+
+            } else if (state.viewMode === 'orbit') {
+                // Earth-Mars Orbital Trajectory View
+                marsCtx.fillStyle = '#04060A';
+                marsCtx.fillRect(0, 0, w, h);
+
+                const cx = w / 2;
+                const cy = h / 2;
+
+                // Sun
+                marsCtx.fillStyle = '#F59E0B';
+                marsCtx.beginPath();
+                marsCtx.arc(cx, cy, 18, 0, Math.PI * 2);
+                marsCtx.fill();
+
+                // Earth Orbit
+                marsCtx.strokeStyle = '#1E293B';
+                marsCtx.beginPath();
+                marsCtx.arc(cx, cy, 90, 0, Math.PI * 2);
+                marsCtx.stroke();
+
+                // Mars Orbit
+                marsCtx.strokeStyle = '#334155';
+                marsCtx.beginPath();
+                marsCtx.arc(cx, cy, 160, 0, Math.PI * 2);
+                marsCtx.stroke();
+
+                // Earth Position
+                const earthAngle = Date.now() * 0.0002;
+                const ex = cx + Math.cos(earthAngle) * 90;
+                const ey = cy + Math.sin(earthAngle) * 90;
+                marsCtx.fillStyle = '#0284C7';
+                marsCtx.beginPath();
+                marsCtx.arc(ex, ey, 6, 0, Math.PI * 2);
+                marsCtx.fill();
+                marsCtx.fillStyle = '#CBD5E1';
+                marsCtx.font = '10px monospace';
+                marsCtx.fillText('EARTH (DSN)', ex + 10, ey + 4);
+
+                // Mars Position
+                const marsAngle = earthAngle * 0.52; // Orbital mechanics speed ratio
+                const mx = cx + Math.cos(marsAngle) * 160;
+                const my = cy + Math.sin(marsAngle) * 160;
+                marsCtx.fillStyle = '#C85A32';
+                marsCtx.beginPath();
+                marsCtx.arc(mx, my, 8, 0, Math.PI * 2);
+                marsCtx.fill();
+                marsCtx.fillText('MARS (JEZERO)', mx + 12, my + 4);
+
+                // Radio Beam Line
+                marsCtx.strokeStyle = state.signalLocked ? '#06B6D4' : 'rgba(239, 68, 68, 0.4)';
+                marsCtx.setLineDash([4, 4]);
+                marsCtx.beginPath();
+                marsCtx.moveTo(ex, ey);
+                marsCtx.lineTo(mx, my);
+                marsCtx.stroke();
+                marsCtx.setLineDash([]);
+            }
+        }
+
+        // Add Telemetry Log Entry
+        function logTelemetry(msg, type = 'info') {
+            const container = document.getElementById('telemetryLog');
+            const now = new Date().toISOString().substring(11, 19);
+            const line = document.createElement('div');
+            
+            let color = 'text-slate-300';
+            if (type === 'warn') color = 'text-nasa-amber';
+            if (type === 'error') color = 'text-nasa-red';
+            if (type === 'success') color = 'text-nasa-green';
+            if (type === 'sys') color = 'text-nasa-cyan';
+
+            line.innerHTML = `<span class="text-slate-500">[${now}]</span> <span class="${color}">${msg}</span>`;
+            container.appendChild(line);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Append Command to Queue
+        let selectedCmdType = null;
+
+        document.querySelectorAll('.cmd-add-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = btn.dataset.type;
+                selectedCmdType = type;
+                const paramBox = document.getElementById('cmdParamBox');
+                const title = document.getElementById('paramTitle');
+                const unit = document.getElementById('paramUnit');
+                const input = document.getElementById('paramValue');
+
+                paramBox.classList.remove('hidden');
+
+                if (type === 'MOVE') {
+                    title.innerText = 'PARAM: MOVE_FORWARD';
+                    unit.innerText = 'METERS';
+                    input.value = 5;
+                } else if (type === 'TURN') {
+                    title.innerText = 'PARAM: TURN_HEADING';
+                    unit.innerText = 'DEGREES';
+                    input.value = 45;
+                } else if (type === 'SAMPLE') {
+                    title.innerText = 'PARAM: SCAN_SAMPLE';
+                    unit.innerText = 'DEPTH (cm)';
+                    input.value = 10;
+                } else if (type === 'CHARGE') {
+                    title.innerText = 'PARAM: CHARGE_SOLAR';
+                    unit.innerText = 'MINUTES';
+                    input.value = 30;
+                }
+            });
+        });
+
+        document.getElementById('addCmdConfirmBtn').addEventListener('click', () => {
+            if (!selectedCmdType) return;
+            const val = parseFloat(document.getElementById('paramValue').value);
+            
+            state.commandQueue.push({
+                id: Date.now(),
+                type: selectedCmdType,
+                val: val,
+                bytes: 16
+            });
+
+            audioEngine.playPing();
+            renderSequenceQueue();
+        });
+
+        document.getElementById('clearQueueBtn').addEventListener('click', () => {
+            state.commandQueue = [];
+            renderSequenceQueue();
+        });
+
+        function renderSequenceQueue() {
+            const list = document.getElementById('sequenceList');
+            list.innerHTML = '';
+
+            if (state.commandQueue.length === 0) {
+                list.innerHTML = `<div class="text-slate-500 text-[11px] text-center py-8">No commands in packet buffer.<br>Select a command above to queue.</div>`;
+                document.getElementById('cmdMemoryBadge').innerText = 'MEM: 0%';
+                return;
+            }
+
+            let totalBytes = 0;
+            state.commandQueue.forEach((cmd, idx) => {
+                totalBytes += cmd.bytes;
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-slate-900 p-2 rounded border border-slate-800 text-[11px]';
+                item.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-slate-500 font-bold">${idx + 1}.</span>
+                        <span class="font-bold text-nasa-cyan">${cmd.type}</span>
+                        <span class="text-slate-300">(${cmd.val})</span>
+                    </div>
+                    <button class="text-nasa-red hover:text-red-400 font-bold" onclick="removeCommand(${cmd.id})">✕</button>
+                `;
+                list.appendChild(item);
+            });
+
+            const memPct = Math.round((totalBytes / 256) * 100);
+            document.getElementById('cmdMemoryBadge').innerText = `MEM: ${memPct}%`;
+            document.getElementById('bufferUsage').innerText = `${totalBytes} / 256 Bytes`;
+            document.getElementById('bufferBar').style.width = `${memPct}%`;
+
+            // Update Calculated Arrival Time
+            const totalDelaySimSeconds = state.owltSeconds;
+            const arrivalDate = new Date(Date.now() + (totalDelaySimSeconds / state.simSpeedRatio) * 1000);
+            document.getElementById('estArrivalTime').innerText = arrivalDate.toISOString().substring(11, 19) + ' UTC';
+        }
+
+        window.removeCommand = function(id) {
+            state.commandQueue = state.commandQueue.filter(c => c.id !== id);
+            renderSequenceQueue();
+        };
+
+        // Transmit Burst Logic
+        document.getElementById('transmitBurstBtn').addEventListener('click', () => {
+            if (state.commandQueue.length === 0) {
+                logTelemetry('BURST REJECTED: Sequence queue is empty.', 'warn');
+                return;
+            }
+
+            if (!state.signalLocked) {
+                logTelemetry('BURST TRANSMISSION FAILED: Carrier lock required (Check HGA Alignment & DSP Tuning).', 'error');
+                return;
+            }
+
+            // Packet Error Rate Check
+            if (Math.random() < state.per) {
+                logTelemetry('PACKET CORRUPTED IN TRANSIT: Signal degradation caused packet checksum failure.', 'error');
+                audioEngine.playChirp();
+                return;
+            }
+
+            audioEngine.playChirp();
+            
+            // Queue Transmission Burst with OWLT Timer
+            const burst = {
+                id: Date.now(),
+                commands: [...state.commandQueue],
+                etaSeconds: state.owltSeconds / state.simSpeedRatio
+            };
+
+            state.transmittingBursts.push(burst);
+            logTelemetry(`TELEMETRY BURST TRANSMITTED: ${burst.commands.length} packet sequences in flight. ETA: ${burst.etaSeconds.toFixed(1)}s`, 'sys');
+
+            // Clear active builder queue
+            state.commandQueue = [];
+            renderSequenceQueue();
+        });
+
+        // Auto-Lock HGA Helper Button
+        document.getElementById('realignHgaBtn').addEventListener('click', () => {
+            state.hgaAzimuth = state.targetAzimuth;
+            state.hgaElevation = state.targetElevation;
+            state.fskFreqShift = 0;
+            document.getElementById('azimuthSlider').value = state.hgaAzimuth;
+            document.getElementById('elevationSlider').value = state.hgaElevation;
+            document.getElementById('freqSlider').value = 0;
+            document.getElementById('azimuthVal').innerText = `${state.hgaAzimuth.toFixed(1)}°`;
+            document.getElementById('elevationVal').innerText = `${state.hgaElevation.toFixed(1)}°`;
+            document.getElementById('freqShiftVal').innerText = '8415.00 MHz';
+            logTelemetry('HGA AUTO-ALIGNMENT COMPLETE: Azimuth/Elevation centered on Mars sector.', 'success');
+        });
+
+        document.getElementById('purgeBufferBtn').addEventListener('click', () => {
+            logTelemetry('DSP BUFFER PURGED: Corrupted bitstream buffers cleared.', 'warn');
+        });
+
+        // Event Listeners for DSP Sliders
+        document.getElementById('azimuthSlider').addEventListener('input', (e) => {
+            state.hgaAzimuth = parseFloat(e.target.value);
+            document.getElementById('azimuthVal').innerText = `${state.hgaAzimuth.toFixed(1)}°`;
+        });
+
+        document.getElementById('elevationSlider').addEventListener('input', (e) => {
+            state.hgaElevation = parseFloat(e.target.value);
+            document.getElementById('elevationVal').innerText = `${state.hgaElevation.toFixed(1)}°`;
+        });
+
+        document.getElementById('freqSlider').addEventListener('input', (e) => {
+            state.fskFreqShift = parseFloat(e.target.value);
+            const freqMhz = (8415.0 + state.fskFreqShift * 0.001).toFixed(2);
+            document.getElementById('freqShiftVal').innerText = `${freqMhz} MHz`;
+            document.getElementById('fskOffset').innerText = `Δf: ${state.fskFreqShift > 0 ? '+' : ''}${state.fskFreqShift} Hz`;
+        });
+
+        document.getElementById('fecSelect').addEventListener('change', (e) => {
+            state.fecRate = e.target.value;
+            logTelemetry(`DSP REED-SOLOMON FEC CODE RATE SET TO ${state.fecRate}`, 'sys');
+        });
+
+        // View Mode Switchers
+        document.getElementById('viewRadarBtn').addEventListener('click', () => setViewMode('radar'));
+        document.getElementById('viewCamBtn').addEventListener('click', () => setViewMode('cam'));
+        document.getElementById('viewOrbitBtn').addEventListener('click', () => setViewMode('orbit'));
+
+        function setViewMode(mode) {
+            state.viewMode = mode;
+            ['viewRadarBtn', 'viewCamBtn', 'viewOrbitBtn'].forEach(id => {
+                const btn = document.getElementById(id);
+                btn.className = 'px-3 py-1 rounded hover:bg-slate-800 text-slate-400 border border-transparent shrink-0';
+            });
+
+            if (mode === 'radar') document.getElementById('viewRadarBtn').className = 'px-3 py-1 rounded bg-nasa-accent/20 text-nasa-cyan border border-nasa-accent/50 font-bold shrink-0';
+            if (mode === 'cam') document.getElementById('viewCamBtn').className = 'px-3 py-1 rounded bg-nasa-accent/20 text-nasa-cyan border border-nasa-accent/50 font-bold shrink-0';
+            if (mode === 'orbit') document.getElementById('viewOrbitBtn').className = 'px-3 py-1 rounded bg-nasa-accent/20 text-nasa-cyan border border-nasa-accent/50 font-bold shrink-0';
+        }
+
+        // Mission Selection Loader
+        document.getElementById('missionSelect').addEventListener('change', (e) => {
+            state.missionId = e.target.value;
+            if (state.missionId === '1') {
+                state.marsDistanceKm = 225400000;
+                state.owltSeconds = 751.8;
+                state.targetAzimuth = 180;
+                state.targetElevation = 40;
+                logTelemetry('MISSION LOADED: M1 - First Contact & HGA Calibration.', 'sys');
+            } else if (state.missionId === '2') {
+                state.marsDistanceKm = 310000000;
+                state.owltSeconds = 1034.0;
+                state.targetAzimuth = 210;
+                state.targetElevation = 32;
+                logTelemetry('MISSION LOADED: M2 - Dust Storm Navigation (High Noise Floor).', 'warn');
+            } else if (state.missionId === '3') {
+                state.marsDistanceKm = 380000000;
+                state.owltSeconds = 1267.5;
+                state.targetAzimuth = 145;
+                state.targetElevation = 55;
+                logTelemetry('MISSION LOADED: M3 - Jezero Crater Wall Descent & Satellite Relay.', 'sys');
+            } else {
+                logTelemetry('SANDBOX MODE ACTIVE: Custom deep space parameters.', 'sys');
+            }
+
+            document.getElementById('distanceDisplay').innerText = `${(state.marsDistanceKm / 1e6).toFixed(1)} M km`;
+            const mins = Math.floor(state.owltSeconds / 60);
+            const secs = Math.floor(state.owltSeconds % 60);
+            document.getElementById('owltDisplay').innerText = `${mins}m ${secs}s`;
+            document.getElementById('estDelayText').innerText = `${mins}m ${secs}s`;
+        });
+
+        // Audio Toggle
+        document.getElementById('audioToggleBtn').addEventListener('click', () => {
+            audioEngine.init();
+            state.audioEnabled = !state.audioEnabled;
+            document.getElementById('audioIcon').style.opacity = state.audioEnabled ? '1' : '0.3';
+        });
+
+        // Main Simulation Tick (10 FPS logic, 60 FPS Canvas)
+        let lastTick = Date.now();
+
+        function simTick() {
+            const now = Date.now();
+            const deltaSec = (now - lastTick) / 1000;
+            lastTick = now;
+
+            // Recalculate Signal Physics & DSP
+            calculateDSP();
+
+            // Process In-Flight Telemetry Packets
+            for (let i = state.transmittingBursts.length - 1; i >= 0; i--) {
+                const burst = state.transmittingBursts[i];
+                burst.etaSeconds -= deltaSec;
+
+                document.getElementById('burstState').innerText = `IN TRANSIT (${burst.etaSeconds.toFixed(1)}s)`;
+                document.getElementById('timeToTarget').innerText = `${burst.etaSeconds.toFixed(1)}s`;
+
+                // Packet Arrival at Mars Rover
+                if (burst.etaSeconds <= 0) {
+                    executeBurstOnRover(burst);
+                    state.transmittingBursts.splice(i, 1);
+                    document.getElementById('burstState').innerText = 'IDLE';
+                    document.getElementById('timeToTarget').innerText = '--:--';
+                }
+            }
+
+            // Render Canvases
+            renderSNRGraph();
+            renderMarsCanvas();
+
+            requestAnimationFrame(simTick);
+        }
+
+        // Execute Received Sequence Commands on Mars Rover Physics Engine
+        function executeBurstOnRover(burst) {
+            logTelemetry(`PACKET RECEIVED AT MARS: Executing ${burst.commands.length} instructions.`, 'success');
+            audioEngine.playPing();
+
+            burst.commands.forEach((cmd, i) => {
+                setTimeout(() => {
+                    if (cmd.type === 'MOVE') {
+                        // Check Terrain Slip Hazard
+                        let slip = 0.12;
+                        state.hazardZones.forEach(z => {
+                            const dist = Math.hypot(state.rover.x - z.x, state.rover.y - z.y);
+                            if (dist < z.radius && z.slip) slip = z.slip;
+                        });
+
+                        const actualMove = cmd.val * (1 - slip);
+                        state.rover.x += Math.cos(state.rover.heading * Math.PI / 180) * actualMove;
+                        state.rover.y += Math.sin(state.rover.heading * Math.PI / 180) * actualMove;
+                        
+                        // Very slow and gradual battery drain reduction
+                        state.rover.batteryPct = Math.max(0, state.rover.batteryPct - cmd.val * 0.05);
+                        state.rover.wheelSlip = slip;
+
+                        document.getElementById('slipVal').innerText = `${slip.toFixed(2)} (${slip > 0.3 ? 'Sand Trap' : 'Regolith'})`;
+                        logTelemetry(`ROVER EXECUTED: MOVE_FORWARD(${cmd.val}m) -> Actual distance traveled: ${actualMove.toFixed(1)}m`, 'info');
+
+                    } else if (cmd.type === 'TURN') {
+                        state.rover.heading = (state.rover.heading + cmd.val) % 360;
+                        logTelemetry(`ROVER EXECUTED: TURN_HEADING(${cmd.val}°) -> Heading: ${state.rover.heading}°`, 'info');
+
+                    } else if (cmd.type === 'SAMPLE') {
+                        const distToTarget = Math.hypot(state.rover.x - state.targetSite.x, state.rover.y - state.targetSite.y);
+                        if (distToTarget <= state.targetSite.radius) {
+                            state.rover.samplesCollected++;
+                            logTelemetry(`MISSION OBJECTIVE ACHIEVED: Regolith sample extracted successfully! Total: ${state.rover.samplesCollected}`, 'success');
+                            
+                            const notif = document.getElementById('canvasNotification');
+                            notif.innerText = `MISSION SUCCESS: Regolith Sample #${state.rover.samplesCollected} Extracted!`;
+                            notif.classList.remove('hidden');
+                        } else {
+                            logTelemetry(`SAMPLE DRILL FAILED: Rover is ${distToTarget.toFixed(1)}m from Target Alpha site.`, 'warn');
+                        }
+
+                    } else if (cmd.type === 'CHARGE') {
+                        state.rover.batteryPct = Math.min(100, state.rover.batteryPct + 15);
+                        logTelemetry(`ROVER EXECUTED: CHARGE_SOLAR -> Battery level: ${state.rover.batteryPct.toFixed(0)}%`, 'info');
+                    }
+
+                    // Update UI Gauges
+                    document.getElementById('powerVal').innerText = `${state.rover.batteryPct.toFixed(0)}% (${(state.rover.batteryPct * 5.5).toFixed(0)}W)`;
+                }, i * 600);
+            });
+        }
+
+        // Initialize App View and Loop
+        window.onload = () => {
+            resizeCanvases();
+            simTick();
+            logTelemetry('JPL DSN COMMUNICATIONS INITIALIZED. Telemetry Lock Pending...', 'sys');
+        };
+    </script>
+</body>
+</html>
